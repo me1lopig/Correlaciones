@@ -3,8 +3,9 @@ from tkinter import ttk
 import pandas as pd
 import os
 
+
 # Ruta del archivo Excel
-file_path = 'Tablas.xlsx'
+file_path = './Resources/Tablas.xlsx'
 
 # Verificar si el archivo existe
 if not os.path.exists(file_path):
