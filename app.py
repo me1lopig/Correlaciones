@@ -201,76 +201,78 @@ def main():
             }
         )
 
+        # Botón para calcular Cc
+        if st.button("Calcular Cc"):
+            LL = edited_df.loc[edited_df["Symbol"] == "LL", "Value"].iloc[0]
+            PL = edited_df.loc[edited_df["Symbol"] == "PL", "Value"].iloc[0]
+            IP = edited_df.loc[edited_df["Symbol"] == "IP", "Value"].iloc[0]
+            w = edited_df.loc[edited_df["Symbol"] == "w", "Value"].iloc[0]
+            e = edited_df.loc[edited_df["Symbol"] == "e", "Value"].iloc[0]
+            Gs = edited_df.loc[edited_df["Symbol"] == "Gs", "Value"].iloc[0]
+            F = edited_df.loc[edited_df["Symbol"] == "F", "Value"].iloc[0]
+
+            resultados, formulas_usadas = calcular_Cc(LL=LL, PL=PL, IP=IP, w=w, e=e, Gs=Gs, F=F)
+
+            if resultados:
+                st.subheader("Resultados de Cc según fórmulas aplicables:")
+                for metodo, valor in resultados.items():
+                    st.markdown(f"**{metodo}**")
+                    st.write(f"Fórmula: {formulas_usadas[metodo]['formula']}")
+                    st.write(f"Parámetros usados: {', '.join(formulas_usadas[metodo]['parametros'])}")
+                    if isinstance(valor, str):
+                        st.write(f"Resultado: {valor}")
+                    else:
+                        st.write(f"Resultado: Cc = {valor:.4f}")
+                    st.markdown("---")
+
+                # Generar informe
+                informe_buffer = generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas)
+                st.download_button(
+                    label="Descargar informe en Word",
+                    data=informe_buffer,
+                    file_name="informe_Cc.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+            else:
+                st.warning("No hay suficientes datos para aplicar ninguna fórmula.")
+
     # Panel lateral con las fórmulas (derecha)
     with col2:
         st.header("Fórmulas Disponibles")
-        st.markdown("""
-        <style>
-        .formula {
-            border-left: 3px solid #4CAF50;
-            padding-left: 10px;
-            margin-bottom: 15px;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+        formula_container = st.container()
+        with st.expander("Ver todas las fórmulas", expanded=True):
+            st.markdown("""
+            <style>
+            .formula {
+                border-left: 3px solid #4CAF50;
+                padding-left: 10px;
+                margin-bottom: 15px;
+            }
+            </style>
+            """, unsafe_allow_html=True)
 
-        formulas = [
-            {"name": "Terzaghi & Peck (1967)", "formula": "Cc = 0.009 × (LL - 10)", "params": "LL"},
-            {"name": "Azzouz et al. (1976, arcillas remoldeadas)", "formula": "Cc = 0.007 × (LL - 7)", "params": "LL"},
-            {"name": "Azzouz et al. (1976, arcillas brasileñas)", "formula": "Cc = 0.0046 × (LL - 9)", "params": "LL"},
-            {"name": "Mayne (1980)", "formula": "Cc = (LL - 13) / 109", "params": "LL"},
-            {"name": "Hough (1957)", "formula": "Cc = 0.3 × (e - 0.27)", "params": "e"},
-            {"name": "Azzouz et al. (1976, todas las arcillas)", "formula": "Cc = 0.156 × e + 0.0107", "params": "e"},
-            {"name": "Azzouz et al. (1976, baja plasticidad)", "formula": "Cc = 0.75 × (e - 0.5)", "params": "e"},
-            {"name": "Azzouz et al. (1976, São Paulo)", "formula": "Cc = 1.21 + 1.005 × (e - 1.87)", "params": "e"},
-            {"name": "Nishida (1956)", "formula": "Cc = 1.15 × (e - 0.35)", "params": "e"},
-            {"name": "Azzouz et al. (1976, suelos orgánicos)", "formula": "Cc = 0.0115 × w", "params": "w"},
-            {"name": "Koppula (1981, a)", "formula": "Cc = 0.0093 × w", "params": "w"},
-            {"name": "Azzouz et al. (1976, Chicago 2)", "formula": "Cc = 17.66 × 10⁻⁵ × w² + 5.93 × 10⁻³ × w - 0.135", "params": "w"},
-            {"name": "Azzouz et al. (1976, 678 datos)", "formula": "Cc = 0.37 × (e + 0.003 × LL + 0.0004 × w - 0.34)", "params": "e, LL, w"},
-            {"name": "Wroth & Wood (1978)", "formula": "Cc = 0.005 × Gs × IP", "params": "Gs, IP"},
-            {"name": "Nakase et al. (1988)", "formula": "Cc = 0.046 + 0.0104 × IP", "params": "IP"},
-            {"name": "Koppula (1981, b)", "formula": "Cc = -0.0997 + 0.009 × LL + 0.0014 × IP + 0.0036 × w + 0.1156 × e + 0.0025 × F", "params": "LL, IP, w, e, F"},
-            {"name": "Carrier (1985)", "formula": "Cc = 0.329 × (0.01 × w × Gs - 0.027 × PL + 0.0133 × IP × (1.192 + F / IP))", "params": "w, Gs, PL, IP, F"}
-        ]
+            formulas = [
+                {"name": "Terzaghi & Peck (1967)", "formula": "Cc = 0.009 × (LL - 10)", "params": "LL"},
+                {"name": "Azzouz et al. (1976, arcillas remoldeadas)", "formula": "Cc = 0.007 × (LL - 7)", "params": "LL"},
+                {"name": "Azzouz et al. (1976, arcillas brasileñas)", "formula": "Cc = 0.0046 × (LL - 9)", "params": "LL"},
+                {"name": "Mayne (1980)", "formula": "Cc = (LL - 13) / 109", "params": "LL"},
+                {"name": "Hough (1957)", "formula": "Cc = 0.3 × (e - 0.27)", "params": "e"},
+                {"name": "Azzouz et al. (1976, todas las arcillas)", "formula": "Cc = 0.156 × e + 0.0107", "params": "e"},
+                {"name": "Azzouz et al. (1976, baja plasticidad)", "formula": "Cc = 0.75 × (e - 0.5)", "params": "e"},
+                {"name": "Azzouz et al. (1976, São Paulo)", "formula": "Cc = 1.21 + 1.005 × (e - 1.87)", "params": "e"},
+                {"name": "Nishida (1956)", "formula": "Cc = 1.15 × (e - 0.35)", "params": "e"},
+                {"name": "Azzouz et al. (1976, suelos orgánicos)", "formula": "Cc = 0.0115 × w", "params": "w"},
+                {"name": "Koppula (1981, a)", "formula": "Cc = 0.0093 × w", "params": "w"},
+                {"name": "Azzouz et al. (1976, Chicago 2)", "formula": "Cc = 17.66 × 10⁻⁵ × w² + 5.93 × 10⁻³ × w - 0.135", "params": "w"},
+                {"name": "Azzouz et al. (1976, 678 datos)", "formula": "Cc = 0.37 × (e + 0.003 × LL + 0.0004 × w - 0.34)", "params": "e, LL, w"},
+                {"name": "Wroth & Wood (1978)", "formula": "Cc = 0.005 × Gs × IP", "params": "Gs, IP"},
+                {"name": "Nakase et al. (1988)", "formula": "Cc = 0.046 + 0.0104 × IP", "params": "IP"},
+                {"name": "Koppula (1981, b)", "formula": "Cc = -0.0997 + 0.009 × LL + 0.0014 × IP + 0.0036 × w + 0.1156 × e + 0.0025 × F", "params": "LL, IP, w, e, F"},
+                {"name": "Carrier (1985)", "formula": "Cc = 0.329 × (0.01 × w × Gs - 0.027 × PL + 0.0133 × IP × (1.192 + F / IP))", "params": "w, Gs, PL, IP, F"}
+            ]
 
-        for formula in formulas:
-            st.markdown(f'<div class="formula"><b>{formula["name"]}</b><br>Fórmula: {formula["formula"]}<br>Parámetros: {formula["params"]}</div>', unsafe_allow_html=True)
-
-    # Extraer los valores introducidos
-    LL = edited_df.loc[edited_df["Symbol"] == "LL", "Value"].iloc[0]
-    PL = edited_df.loc[edited_df["Symbol"] == "PL", "Value"].iloc[0]
-    IP = edited_df.loc[edited_df["Symbol"] == "IP", "Value"].iloc[0]
-    w = edited_df.loc[edited_df["Symbol"] == "w", "Value"].iloc[0]
-    e = edited_df.loc[edited_df["Symbol"] == "e", "Value"].iloc[0]
-    Gs = edited_df.loc[edited_df["Symbol"] == "Gs", "Value"].iloc[0]
-    F = edited_df.loc[edited_df["Symbol"] == "F", "Value"].iloc[0]
-
-    if st.button("Calcular Cc"):
-        resultados, formulas_usadas = calcular_Cc(LL=LL, PL=PL, IP=IP, w=w, e=e, Gs=Gs, F=F)
-
-        if resultados:
-            st.subheader("Resultados de Cc según fórmulas aplicables:")
-            for metodo, valor in resultados.items():
-                st.markdown(f"**{metodo}**")
-                st.write(f"Fórmula: {formulas_usadas[metodo]['formula']}")
-                st.write(f"Parámetros usados: {', '.join(formulas_usadas[metodo]['parametros'])}")
-                if isinstance(valor, str):
-                    st.write(f"Resultado: {valor}")
-                else:
-                    st.write(f"Resultado: Cc = {valor:.4f}")
-                st.markdown("---")
-
-            # Generar informe
-            informe_buffer = generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas)
-            st.download_button(
-                label="Descargar informe en Word",
-                data=informe_buffer,
-                file_name="informe_Cc.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            )
-        else:
-            st.warning("No hay suficientes datos para aplicar ninguna fórmula.")
+            for formula in formulas:
+                st.markdown(f'<div class="formula"><b>{formula["name"]}</b><br>Fórmula: {formula["formula"]}<br>Parámetros: {formula["params"]}</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
