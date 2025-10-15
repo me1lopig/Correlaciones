@@ -162,10 +162,8 @@ def main():
     st.title("Calculadora de Índice de Compresión (Cc)")
     st.markdown("Introduce los datos disponibles para calcular Cc según diferentes fórmulas.")
 
-    col1, col2 = st.columns([1, 1])
-
-    with col1:
-        data = {
+    if 'data' not in st.session_state:
+        st.session_state.data = {
             "Símbolo": ["LL", "PL", "IP", "w", "e", "Gs", "gsat", "gdry", "F", "n"],
             "Descripción del Parámetro": [
                 "Límite líquido", "Límite plástico", "Índice plástico", "Contenido de humedad",
@@ -176,7 +174,10 @@ def main():
             "Unidad": ["%", "%", "%", "%", "", "", "kN/m³", "kN/m³", "%", ""]
         }
 
-        df = pd.DataFrame(data)
+    col1, col2 = st.columns([1, 1])
+
+    with col1:
+        df = pd.DataFrame(st.session_state.data)
         edited_df = st.data_editor(
             df,
             num_rows="fixed",
@@ -185,7 +186,8 @@ def main():
                 "Símbolo": st.column_config.TextColumn("Símbolo", disabled=True),
                 "Descripción del Parámetro": st.column_config.TextColumn("Descripción del Parámetro", disabled=True),
                 "Unidad": st.column_config.TextColumn("Unidad", disabled=True)
-            }
+            },
+            key="data_editor"
         )
 
         if st.button("Calcular Cc"):
