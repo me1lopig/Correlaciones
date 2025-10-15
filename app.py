@@ -5,7 +5,7 @@ import pandas as pd
 
 def calcular_Cc(LL=None, PL=None, IP=None, w=None, e=None, Gs=None, F=None):
     """
-    Calcula el índice de compresión (Cc) según los datos disponibles.
+    Calcula el índice de compresibilidad (Cc) según los datos disponibles.
     Solo aplica fórmulas para las que todos los parámetros necesarios estén disponibles.
     """
     resultados = {}
@@ -67,8 +67,8 @@ def calcular_Cc(LL=None, PL=None, IP=None, w=None, e=None, Gs=None, F=None):
 
     if e is not None and LL is not None and w is not None:
         cc_value = 0.37 * (e + 0.003 * LL + 0.0004 * w - 0.34)
-        resultados['Azzouz et al. (1976, 678 datos)'] = valor_aceptable(cc_value)
-        formulas_usadas['Azzouz et al. (1976, 678 datos)'] = {'formula': 'Cc = 0.37 × (e + 0.003 × LL + 0.0004 × w - 0.34)', 'parametros': ['e', 'LL', 'w']}
+        resultados['Azzouz et al. (1976)'] = valor_aceptable(cc_value)
+        formulas_usadas['Azzouz et al. (1976)'] = {'formula': 'Cc = 0.37 × (e + 0.003 × LL + 0.0004 × w - 0.34)', 'parametros': ['e', 'LL', 'w']}
 
     if PL is not None and Gs is not None:
         cc_value = 0.005 * Gs * IP
