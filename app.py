@@ -151,21 +151,21 @@ def generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas):
 
 def main():
     st.set_page_config(layout="wide")
-    st.title("Calculadora de Índice de Compresión (Cc)")
+    st.title("Correlaciones para el cálculo del Índice de Compresión (Cc)")
     st.markdown("Introduce los datos disponibles para calcular Cc según diferentes fórmulas.")
 
     col1, col2 = st.columns([1, 1])
 
     with col1:
         data = {
-            "Symbol": ["LL", "PL", "IP", "w", "e", "Gs", "gsat", "gdry", "F", "n"],
-            "Parameter Description": [
-                "Liquid Limit", "Plastic Limit", "Plastic Index", "Moisture Content",
-                "Void Ratio", "Specific Gravity", "Saturated Unit Weight", "Dry Unit Weight",
-                "Percent fine-grained (clay & silt)", "Porosity"
+            "Símbolo": ["LL", "PL", "IP", "w", "e", "Gs", "gsat", "gsec", "F", "n"],
+            "Descripción del Parámetro": [
+                "Límite líquido", "Límite plástico", "Índice plástico", "Contenido de humedad",
+                "Relación de vacíos", "Gravedad específica", "Peso específico saturado", "Peso específico seco",
+                "Porcentaje de grano fino (arcilla y limo)", "Porosidad"
             ],
-            "Value": [None, None, None, None, None, None, None, None, None, None],
-            "Unit": ["%", "%", "%", "%", "", "", "kN/m³", "kN/m³", "%", ""]
+            "Valor": [None, None, None, None, None, None, None, None, None, None],
+            "Unidad": ["%", "%", "%", "%", "", "", "kN/m³", "kN/m³", "%", ""]
         }
 
         df = pd.DataFrame(data)
@@ -174,45 +174,45 @@ def main():
             num_rows="fixed",
             hide_index=True,
             column_config={
-                "Symbol": st.column_config.TextColumn("Symbol", disabled=True),
-                "Parameter Description": st.column_config.TextColumn("Parameter Description", disabled=True),
-                "Unit": st.column_config.TextColumn("Unit", disabled=True)
+                "Símbolo": st.column_config.TextColumn("Símbolo", disabled=True),
+                "Descripción del Parámetro": st.column_config.TextColumn("Descripción del Parámetro", disabled=True),
+                "Unidad": st.column_config.TextColumn("Unidad", disabled=True)
             }
         )
 
         if st.button("Calcular Cc"):
             try:
-                LL = float(edited_df.loc[edited_df["Symbol"] == "LL", "Value"].values[0]) if edited_df.loc[edited_df["Symbol"] == "LL", "Value"].values[0] else None
+                LL = float(edited_df.loc[edited_df["Símbolo"] == "LL", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "LL", "Valor"].values[0] else None
             except (ValueError, TypeError):
                 LL = None
 
             try:
-                PL = float(edited_df.loc[edited_df["Symbol"] == "PL", "Value"].values[0]) if edited_df.loc[edited_df["Symbol"] == "PL", "Value"].values[0] else None
+                PL = float(edited_df.loc[edited_df["Símbolo"] == "PL", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "PL", "Valor"].values[0] else None
             except (ValueError, TypeError):
                 PL = None
 
             try:
-                IP = float(edited_df.loc[edited_df["Symbol"] == "IP", "Value"].values[0]) if edited_df.loc[edited_df["Symbol"] == "IP", "Value"].values[0] else None
+                IP = float(edited_df.loc[edited_df["Símbolo"] == "IP", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "IP", "Valor"].values[0] else None
             except (ValueError, TypeError):
                 IP = None
 
             try:
-                w = float(edited_df.loc[edited_df["Symbol"] == "w", "Value"].values[0]) if edited_df.loc[edited_df["Symbol"] == "w", "Value"].values[0] else None
+                w = float(edited_df.loc[edited_df["Símbolo"] == "w", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "w", "Valor"].values[0] else None
             except (ValueError, TypeError):
                 w = None
 
             try:
-                e = float(edited_df.loc[edited_df["Symbol"] == "e", "Value"].values[0]) if edited_df.loc[edited_df["Symbol"] == "e", "Value"].values[0] else None
+                e = float(edited_df.loc[edited_df["Símbolo"] == "e", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "e", "Valor"].values[0] else None
             except (ValueError, TypeError):
                 e = None
 
             try:
-                Gs = float(edited_df.loc[edited_df["Symbol"] == "Gs", "Value"].values[0]) if edited_df.loc[edited_df["Symbol"] == "Gs", "Value"].values[0] else None
+                Gs = float(edited_df.loc[edited_df["Símbolo"] == "Gs", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "Gs", "Valor"].values[0] else None
             except (ValueError, TypeError):
                 Gs = None
 
             try:
-                F = float(edited_df.loc[edited_df["Symbol"] == "F", "Value"].values[0]) if edited_df.loc[edited_df["Symbol"] == "F", "Value"].values[0] else None
+                F = float(edited_df.loc[edited_df["Símbolo"] == "F", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "F", "Valor"].values[0] else None
             except (ValueError, TypeError):
                 F = None
 
@@ -232,7 +232,7 @@ def main():
 
                 informe_buffer = generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas)
                 st.download_button(
-                    label="Descargar informe en Word",
+                    label="Descargar informe en docx",
                     data=informe_buffer,
                     file_name="informe_Cc.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
