@@ -3,6 +3,8 @@ from docx import Document
 import io
 import pandas as pd
 
+# funciones principales
+
 def calcular_Cc(LL=None, PL=None, IP=None, w=None, e=None, Gs=None, F=None):
     """
     Calcula el índice de compresión (Cc) según los datos disponibles.
