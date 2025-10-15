@@ -94,7 +94,7 @@ def calcular_Cc(LL=None, PL=None, IP=None, w=None, e=None, Gs=None, F=None):
 
 def generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas):
     doc = Document()
-    doc.add_heading('Informe de Cálculo del Índice de Compresión (Cc)', level=1)
+    doc.add_heading('Informe de Cálculo del Índice de Compresibilidad (Cc)', level=1)
 
     doc.add_heading('Datos Introducidos', level=2)
     table = doc.add_table(rows=1, cols=2)
@@ -151,7 +151,7 @@ def generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas):
 
 def main():
     st.set_page_config(layout="wide")
-    st.title("Correlaciones para el cálculo del Índice de Compresión (Cc)")
+    st.title("Correlaciones para el cálculo del Índice de Compresibilidad (Cc)")
     st.markdown("Introduce los datos disponibles para calcular Cc según diferentes fórmulas.")
 
     col1, col2 = st.columns([1, 1])
