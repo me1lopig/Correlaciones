@@ -3,8 +3,6 @@ from docx import Document
 import io
 import pandas as pd
 
-# funciones principales
-
 def calcular_Cc(LL=None, PL=None, IP=None, w=None, e=None, Gs=None, F=None):
     """
     Calcula el índice de compresión (Cc) según los datos disponibles.
@@ -76,7 +74,7 @@ def calcular_Cc(LL=None, PL=None, IP=None, w=None, e=None, Gs=None, F=None):
         resultados['Azzouz et al. (1976, 678 datos)'] = valor_aceptable(cc_value)
         formulas_usadas['Azzouz et al. (1976, 678 datos)'] = {'formula': 'Cc = 0.37 × (e + 0.003 × LL + 0.0004 × w - 0.34)', 'parametros': ['e', 'LL', 'w']}
 
-    # Fórmulas que requieren PL y Gs (corregida según la imagen)
+    # Fórmulas que requieren PL y Gs
     if PL is not None and Gs is not None:
         cc_value = 0.005 * Gs * IP
         resultados['Wroth & Wood (1978)'] = valor_aceptable(cc_value)
@@ -242,15 +240,18 @@ def main():
     with col2:
         st.header("Fórmulas Disponibles")
         with st.container():
-            formula_container = st.container()
-            formula_scroll = st.expander("Ver todas las fórmulas", expanded=True)
-            with formula_scroll:
+            formula_scroll = st.container()
+            with st.expander("Ver todas las fórmulas", expanded=True):
                 st.markdown("""
                 <style>
                 .formula {
                     border-left: 3px solid #4CAF50;
                     padding-left: 10px;
                     margin-bottom: 15px;
+                }
+                .formula-container {
+                    height: 500px;
+                    overflow-y: auto;
                 }
                 </style>
                 """, unsafe_allow_html=True)
@@ -275,8 +276,11 @@ def main():
                     {"name": "Carrier (1985)", "formula": "Cc = 0.329 × (0.01 × w × Gs - 0.027 × PL + 0.0133 × IP × (1.192 + F / IP))", "params": "w, Gs, PL, IP, F"}
                 ]
 
+                st.markdown('<div class="formula-container">', unsafe_allow_html=True)
                 for formula in formulas:
                     st.markdown(f'<div class="formula"><b>{formula["name"]}</b><br>Fórmula: {formula["formula"]}<br>Parámetros: {formula["params"]}</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
+
