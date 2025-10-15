@@ -5,96 +5,104 @@ import pandas as pd
 
 def calcular_Cc(LL=None, PL=None, IP=None, w=None, e=None, Gs=None, F=None):
     """
-    Calcula el índice de compresibilidad (Cc) según los datos disponibles.
+    Calcula el índice de compresión (Cc) según los datos disponibles.
     Solo aplica fórmulas para las que todos los parámetros necesarios estén disponibles.
     """
     resultados = {}
     formulas_usadas = {}
 
     def valor_aceptable(valor):
-        return valor if valor is not None and valor >= 0 else "Valor no aceptable para los datos introducidos"
+        return valor if valor is not None and valor > 0 else None
+
+    LL = valor_aceptable(LL)
+    PL = valor_aceptable(PL)
+    IP = valor_aceptable(IP)
+    w = valor_aceptable(w)
+    e = valor_aceptable(e)
+    Gs = valor_aceptable(Gs)
+    F = valor_aceptable(F)
 
     if LL is not None:
         cc_value = 0.009 * (LL - 10)
-        resultados['Terzaghi & Peck (1967)'] = valor_aceptable(cc_value)
+        resultados['Terzaghi & Peck (1967)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Terzaghi & Peck (1967)'] = {'formula': 'Cc = 0.009 × (LL - 10)', 'parametros': ['LL']}
 
         cc_value = 0.007 * (LL - 7)
-        resultados['Azzouz et al. (1976, arcillas remoldeadas)'] = valor_aceptable(cc_value)
+        resultados['Azzouz et al. (1976, arcillas remoldeadas)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Azzouz et al. (1976, arcillas remoldeadas)'] = {'formula': 'Cc = 0.007 × (LL - 7)', 'parametros': ['LL']}
 
         cc_value = 0.0046 * (LL - 9)
-        resultados['Azzouz et al. (1976, arcillas brasileñas)'] = valor_aceptable(cc_value)
+        resultados['Azzouz et al. (1976, arcillas brasileñas)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Azzouz et al. (1976, arcillas brasileñas)'] = {'formula': 'Cc = 0.0046 × (LL - 9)', 'parametros': ['LL']}
 
         cc_value = (LL - 13) / 109
-        resultados['Mayne (1980)'] = valor_aceptable(cc_value)
+        resultados['Mayne (1980)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Mayne (1980)'] = {'formula': 'Cc = (LL - 13) / 109', 'parametros': ['LL']}
 
     if e is not None:
         cc_value = 0.3 * (e - 0.27)
-        resultados['Hough (1957)'] = valor_aceptable(cc_value)
+        resultados['Hough (1957)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Hough (1957)'] = {'formula': 'Cc = 0.3 × (e - 0.27)', 'parametros': ['e']}
 
         cc_value = 0.156 * e + 0.0107
-        resultados['Azzouz et al. (1976, todas las arcillas)'] = valor_aceptable(cc_value)
+        resultados['Azzouz et al. (1976, todas las arcillas)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Azzouz et al. (1976, todas las arcillas)'] = {'formula': 'Cc = 0.156 × e + 0.0107', 'parametros': ['e']}
 
         cc_value = 0.75 * (e - 0.5)
-        resultados['Azzouz et al. (1976, baja plasticidad)'] = valor_aceptable(cc_value)
+        resultados['Azzouz et al. (1976, baja plasticidad)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Azzouz et al. (1976, baja plasticidad)'] = {'formula': 'Cc = 0.75 × (e - 0.5)', 'parametros': ['e']}
 
         cc_value = 1.21 + 1.005 * (e - 1.87)
-        resultados['Azzouz et al. (1976, São Paulo)'] = valor_aceptable(cc_value)
+        resultados['Azzouz et al. (1976, São Paulo)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Azzouz et al. (1976, São Paulo)'] = {'formula': 'Cc = 1.21 + 1.005 × (e - 1.87)', 'parametros': ['e']}
 
         cc_value = 1.15 * (e - 0.35)
-        resultados['Nishida (1956)'] = valor_aceptable(cc_value)
+        resultados['Nishida (1956)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Nishida (1956)'] = {'formula': 'Cc = 1.15 × (e - 0.35)', 'parametros': ['e']}
 
     if w is not None:
         cc_value = 0.0115 * w
-        resultados['Azzouz et al. (1976, suelos orgánicos)'] = valor_aceptable(cc_value)
+        resultados['Azzouz et al. (1976, suelos orgánicos)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Azzouz et al. (1976, suelos orgánicos)'] = {'formula': 'Cc = 0.0115 × w', 'parametros': ['w']}
 
         cc_value = 0.0093 * w
-        resultados['Koppula (1981, a)'] = valor_aceptable(cc_value)
+        resultados['Koppula (1981, a)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Koppula (1981, a)'] = {'formula': 'Cc = 0.0093 × w', 'parametros': ['w']}
 
         cc_value = 17.66e-5 * w**2 + 5.93e-3 * w - 0.135
-        resultados['Azzouz et al. (1976, Chicago 2)'] = valor_aceptable(cc_value)
+        resultados['Azzouz et al. (1976, Chicago 2)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Azzouz et al. (1976, Chicago 2)'] = {'formula': 'Cc = 17.66 × 10⁻⁵ × w² + 5.93 × 10⁻³ × w - 0.135', 'parametros': ['w']}
 
     if e is not None and LL is not None and w is not None:
         cc_value = 0.37 * (e + 0.003 * LL + 0.0004 * w - 0.34)
-        resultados['Azzouz et al. (1976)'] = valor_aceptable(cc_value)
-        formulas_usadas['Azzouz et al. (1976)'] = {'formula': 'Cc = 0.37 × (e + 0.003 × LL + 0.0004 × w - 0.34)', 'parametros': ['e', 'LL', 'w']}
+        resultados['Azzouz et al. (1976, 678 datos)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
+        formulas_usadas['Azzouz et al. (1976, 678 datos)'] = {'formula': 'Cc = 0.37 × (e + 0.003 × LL + 0.0004 × w - 0.34)', 'parametros': ['e', 'LL', 'w']}
 
     if PL is not None and Gs is not None:
         cc_value = 0.005 * Gs * IP
-        resultados['Wroth & Wood (1978)'] = valor_aceptable(cc_value)
+        resultados['Wroth & Wood (1978)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Wroth & Wood (1978)'] = {'formula': 'Cc = 0.005 × Gs × IP', 'parametros': ['Gs', 'IP']}
 
     if IP is not None:
         cc_value = 0.046 + 0.0104 * IP
-        resultados['Nakase et al. (1988)'] = valor_aceptable(cc_value)
+        resultados['Nakase et al. (1988)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Nakase et al. (1988)'] = {'formula': 'Cc = 0.046 + 0.0104 × IP', 'parametros': ['IP']}
 
     if LL is not None and IP is not None and w is not None and e is not None and F is not None:
         cc_value = -0.0997 + 0.009 * LL + 0.0014 * IP + 0.0036 * w + 0.1156 * e + 0.0025 * F
-        resultados['Koppula (1981, b)'] = valor_aceptable(cc_value)
+        resultados['Koppula (1981, b)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Koppula (1981, b)'] = {'formula': 'Cc = -0.0997 + 0.009 × LL + 0.0014 × IP + 0.0036 × w + 0.1156 × e + 0.0025 × F', 'parametros': ['LL', 'IP', 'w', 'e', 'F']}
 
     if w is not None and Gs is not None and PL is not None and IP is not None and F is not None:
         cc_value = 0.329 * (0.01 * w * Gs - 0.027 * PL + 0.0133 * IP * (1.192 + F / IP))
-        resultados['Carrier (1985)'] = valor_aceptable(cc_value)
+        resultados['Carrier (1985)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
         formulas_usadas['Carrier (1985)'] = {'formula': 'Cc = 0.329 × (0.01 × w × Gs - 0.027 × PL + 0.0133 × IP × (1.192 + F / IP))', 'parametros': ['w', 'Gs', 'PL', 'IP', 'F']}
 
     return resultados, formulas_usadas
 
 def generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas):
     doc = Document()
-    doc.add_heading('Informe de Cálculo del Índice de Compresibilidad (Cc)', level=1)
+    doc.add_heading('Informe de Cálculo del Índice de Compresión (Cc)', level=1)
 
     doc.add_heading('Datos Introducidos', level=2)
     table = doc.add_table(rows=1, cols=2)
@@ -151,17 +159,17 @@ def generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas):
 
 def main():
     st.set_page_config(layout="wide")
-    st.title("Correlaciones para el cálculo del Índice de Compresibilidad (Cc)")
+    st.title("Calculadora de Índice de Compresión (Cc)")
     st.markdown("Introduce los datos disponibles para calcular Cc según diferentes fórmulas.")
 
     col1, col2 = st.columns([1, 1])
 
     with col1:
         data = {
-            "Símbolo": ["LL", "PL", "IP", "w", "e", "Gs", "gsat", "gsec", "F", "n"],
+            "Símbolo": ["LL", "PL", "IP", "w", "e", "Gs", "gsat", "gdry", "F", "n"],
             "Descripción del Parámetro": [
                 "Límite líquido", "Límite plástico", "Índice plástico", "Contenido de humedad",
-                "Relación de vacíos", "Gravedad específica", "Peso específico saturado", "Peso específico seco",
+                "Relación de vacíos", "Gravedad específica", "Peso unitario saturado", "Peso unitario seco",
                 "Porcentaje de grano fino (arcilla y limo)", "Porosidad"
             ],
             "Valor": [None, None, None, None, None, None, None, None, None, None],
@@ -182,37 +190,37 @@ def main():
 
         if st.button("Calcular Cc"):
             try:
-                LL = float(edited_df.loc[edited_df["Símbolo"] == "LL", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "LL", "Valor"].values[0] else None
+                LL = float(edited_df.loc[edited_df["Símbolo"] == "LL", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "LL", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "LL", "Valor"].values[0]) > 0 else None
             except (ValueError, TypeError):
                 LL = None
 
             try:
-                PL = float(edited_df.loc[edited_df["Símbolo"] == "PL", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "PL", "Valor"].values[0] else None
+                PL = float(edited_df.loc[edited_df["Símbolo"] == "PL", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "PL", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "PL", "Valor"].values[0]) > 0 else None
             except (ValueError, TypeError):
                 PL = None
 
             try:
-                IP = float(edited_df.loc[edited_df["Símbolo"] == "IP", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "IP", "Valor"].values[0] else None
+                IP = float(edited_df.loc[edited_df["Símbolo"] == "IP", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "IP", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "IP", "Valor"].values[0]) > 0 else None
             except (ValueError, TypeError):
                 IP = None
 
             try:
-                w = float(edited_df.loc[edited_df["Símbolo"] == "w", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "w", "Valor"].values[0] else None
+                w = float(edited_df.loc[edited_df["Símbolo"] == "w", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "w", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "w", "Valor"].values[0]) > 0 else None
             except (ValueError, TypeError):
                 w = None
 
             try:
-                e = float(edited_df.loc[edited_df["Símbolo"] == "e", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "e", "Valor"].values[0] else None
+                e = float(edited_df.loc[edited_df["Símbolo"] == "e", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "e", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "e", "Valor"].values[0]) > 0 else None
             except (ValueError, TypeError):
                 e = None
 
             try:
-                Gs = float(edited_df.loc[edited_df["Símbolo"] == "Gs", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "Gs", "Valor"].values[0] else None
+                Gs = float(edited_df.loc[edited_df["Símbolo"] == "Gs", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "Gs", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "Gs", "Valor"].values[0]) > 0 else None
             except (ValueError, TypeError):
                 Gs = None
 
             try:
-                F = float(edited_df.loc[edited_df["Símbolo"] == "F", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "F", "Valor"].values[0] else None
+                F = float(edited_df.loc[edited_df["Símbolo"] == "F", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "F", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "F", "Valor"].values[0]) > 0 else None
             except (ValueError, TypeError):
                 F = None
 
@@ -232,7 +240,7 @@ def main():
 
                 informe_buffer = generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas)
                 st.download_button(
-                    label="Descargar informe en docx",
+                    label="Descargar informe en Word",
                     data=informe_buffer,
                     file_name="informe_Cc.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
