@@ -212,5 +212,8 @@ def main():
             for correlacion in correlaciones:
                 st.markdown(f'<div class="formula"><b>{correlacion["name"]}</b><br>Fórmula: {correlacion["formula"]}<br>Parámetros: {correlacion["params"]}</div>', unsafe_allow_html=True)
 
+
+
+
 if __name__ == "__main__":
     main()

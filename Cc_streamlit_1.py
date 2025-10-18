@@ -285,5 +285,8 @@ def main():
             for formula in formulas:
                 st.markdown(f'<div class="formula"><b>{formula["name"]}</b><br>Fórmula: {formula["formula"]}<br>Parámetros: {formula["params"]}</div>', unsafe_allow_html=True)
 
+
+
+
 if __name__ == "__main__":
     main()
