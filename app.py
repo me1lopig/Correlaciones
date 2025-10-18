@@ -30,7 +30,7 @@ def main():
 
 
 def show_portal():
-    st.title("Portal de Correlaciones Geotécnicas")
+    st.title("Portal de Correlaciones Geotécnicas (en pruebas)")
     st.markdown("Selecciona una de las siguientes aplicaciones para calcular diferentes parámetros geotécnicos:")
 
     st.markdown(
