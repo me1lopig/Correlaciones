@@ -2,7 +2,7 @@ import streamlit as st
 
 
 def main():
-    st.set_page_config(page_title="Portal de Correlaciones Geotécnicas", layout="wide")
+    st.set_page_config(page_title="Portal de Correlaciones Geotécnicas (en pruebas)", layout="wide")
 
     if 'current_page' not in st.session_state:
         st.session_state.current_page = "portal"
