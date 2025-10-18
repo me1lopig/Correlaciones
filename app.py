@@ -1,289 +1,171 @@
 import streamlit as st
-from docx import Document
-import io
-import pandas as pd
 
-def calcular_Cc(LL=None, PL=None, IP=None, w=None, e=None, Gs=None, F=None):
-    """
-    Calcula el índice de compresión (Cc) según los datos disponibles.
-    Solo aplica fórmulas para las que todos los parámetros necesarios estén disponibles.
-    """
-    resultados = {}
-    formulas_usadas = {}
-
-    def valor_aceptable(valor):
-        return valor if valor is not None and valor > 0 else None
-
-    LL = valor_aceptable(LL)
-    PL = valor_aceptable(PL)
-    IP = valor_aceptable(IP)
-    w = valor_aceptable(w)
-    e = valor_aceptable(e)
-    Gs = valor_aceptable(Gs)
-    F = valor_aceptable(F)
-
-    if LL is not None:
-        cc_value = 0.009 * (LL - 10)
-        resultados['Terzaghi & Peck (1967)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Terzaghi & Peck (1967)'] = {'formula': 'Cc = 0.009 × (LL - 10)', 'parametros': ['LL']}
-
-        cc_value = 0.007 * (LL - 7)
-        resultados['Azzouz et al. (1976, arcillas remoldeadas)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Azzouz et al. (1976, arcillas remoldeadas)'] = {'formula': 'Cc = 0.007 × (LL - 7)', 'parametros': ['LL']}
-
-        cc_value = 0.0046 * (LL - 9)
-        resultados['Azzouz et al. (1976, arcillas brasileñas)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Azzouz et al. (1976, arcillas brasileñas)'] = {'formula': 'Cc = 0.0046 × (LL - 9)', 'parametros': ['LL']}
-
-        cc_value = (LL - 13) / 109
-        resultados['Mayne (1980)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Mayne (1980)'] = {'formula': 'Cc = (LL - 13) / 109', 'parametros': ['LL']}
-
-    if e is not None:
-        cc_value = 0.3 * (e - 0.27)
-        resultados['Hough (1957)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Hough (1957)'] = {'formula': 'Cc = 0.3 × (e - 0.27)', 'parametros': ['e']}
-
-        cc_value = 0.156 * e + 0.0107
-        resultados['Azzouz et al. (1976, todas las arcillas)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Azzouz et al. (1976, todas las arcillas)'] = {'formula': 'Cc = 0.156 × e + 0.0107', 'parametros': ['e']}
-
-        cc_value = 0.75 * (e - 0.5)
-        resultados['Azzouz et al. (1976, baja plasticidad)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Azzouz et al. (1976, baja plasticidad)'] = {'formula': 'Cc = 0.75 × (e - 0.5)', 'parametros': ['e']}
-
-        cc_value = 1.21 + 1.005 * (e - 1.87)
-        resultados['Azzouz et al. (1976, São Paulo)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Azzouz et al. (1976, São Paulo)'] = {'formula': 'Cc = 1.21 + 1.005 × (e - 1.87)', 'parametros': ['e']}
-
-        cc_value = 1.15 * (e - 0.35)
-        resultados['Nishida (1956)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Nishida (1956)'] = {'formula': 'Cc = 1.15 × (e - 0.35)', 'parametros': ['e']}
-
-    if w is not None:
-        cc_value = 0.0115 * w
-        resultados['Azzouz et al. (1976, suelos orgánicos)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Azzouz et al. (1976, suelos orgánicos)'] = {'formula': 'Cc = 0.0115 × w', 'parametros': ['w']}
-
-        cc_value = 0.0093 * w
-        resultados['Koppula (1981, a)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Koppula (1981, a)'] = {'formula': 'Cc = 0.0093 × w', 'parametros': ['w']}
-
-        cc_value = 17.66e-5 * w**2 + 5.93e-3 * w - 0.135
-        resultados['Azzouz et al. (1976, Chicago 2)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Azzouz et al. (1976, Chicago 2)'] = {'formula': 'Cc = 17.66 × 10⁻⁵ × w² + 5.93 × 10⁻³ × w - 0.135', 'parametros': ['w']}
-
-    if e is not None and LL is not None and w is not None:
-        cc_value = 0.37 * (e + 0.003 * LL + 0.0004 * w - 0.34)
-        resultados['Azzouz et al. (1976, 678 datos)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Azzouz et al. (1976, 678 datos)'] = {'formula': 'Cc = 0.37 × (e + 0.003 × LL + 0.0004 × w - 0.34)', 'parametros': ['e', 'LL', 'w']}
-
-    if PL is not None and Gs is not None:
-        cc_value = 0.005 * Gs * IP
-        resultados['Wroth & Wood (1978)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Wroth & Wood (1978)'] = {'formula': 'Cc = 0.005 × Gs × IP', 'parametros': ['Gs', 'IP']}
-
-    if IP is not None:
-        cc_value = 0.046 + 0.0104 * IP
-        resultados['Nakase et al. (1988)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Nakase et al. (1988)'] = {'formula': 'Cc = 0.046 + 0.0104 × IP', 'parametros': ['IP']}
-
-    if LL is not None and IP is not None and w is not None and e is not None and F is not None:
-        cc_value = -0.0997 + 0.009 * LL + 0.0014 * IP + 0.0036 * w + 0.1156 * e + 0.0025 * F
-        resultados['Koppula (1981, b)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Koppula (1981, b)'] = {'formula': 'Cc = -0.0997 + 0.009 × LL + 0.0014 × IP + 0.0036 × w + 0.1156 × e + 0.0025 × F', 'parametros': ['LL', 'IP', 'w', 'e', 'F']}
-
-    if w is not None and Gs is not None and PL is not None and IP is not None and F is not None:
-        cc_value = 0.329 * (0.01 * w * Gs - 0.027 * PL + 0.0133 * IP * (1.192 + F / IP))
-        resultados['Carrier (1985)'] = cc_value if cc_value > 0 else "Valor no aceptable para los datos introducidos"
-        formulas_usadas['Carrier (1985)'] = {'formula': 'Cc = 0.329 × (0.01 × w × Gs - 0.027 × PL + 0.0133 × IP × (1.192 + F / IP))', 'parametros': ['w', 'Gs', 'PL', 'IP', 'F']}
-
-    return resultados, formulas_usadas
-
-def generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas):
-    doc = Document()
-    doc.add_heading('Informe de Cálculo del Índice de Compresión (Cc)', level=1)
-
-    doc.add_heading('Datos Introducidos', level=2)
-    table = doc.add_table(rows=1, cols=2)
-    table.style = 'Table Grid'
-    hdr_cells = table.rows[0].cells
-
-    hdr_cells[0].text = 'Parámetro'
-    hdr_cells[1].text = 'Valor'
-    for cell in hdr_cells:
-        for paragraph in cell.paragraphs:
-            for run in paragraph.runs:
-                run.bold = True
-
-    datos = []
-    if LL is not None:
-        datos.append(("Límite líquido (LL, %)", LL))
-    if PL is not None:
-        datos.append(("Límite plástico (PL, %)", PL))
-    if IP is not None:
-        datos.append(("Índice plástico (IP, %)", IP))
-    if w is not None:
-        datos.append(("Contenido de humedad (w, %)", w))
-    if e is not None:
-        datos.append(("Relación de vacíos (e)", e))
-    if Gs is not None:
-        datos.append(("Gravedad específica (Gs)", Gs))
-    if F is not None:
-        datos.append(("Porcentaje de grano fino (F, %)", F))
-
-    for parametro, valor in datos:
-        row_cells = table.add_row().cells
-        row_cells[0].text = parametro
-        row_cells[1].text = str(valor)
-
-    doc.add_heading('Resultados', level=2)
-    doc.add_paragraph(f"Se calcularon {len(resultados)} correlaciones para Cc con los datos proporcionados.")
-
-    for metodo, valor in resultados.items():
-        doc.add_heading(metodo, level=3)
-        formula_info = formulas_usadas[metodo]
-        p = doc.add_paragraph()
-        run = p.add_run(f"Fórmula: {formula_info['formula']}")
-        run.bold = True
-        doc.add_paragraph(f"Parámetros usados: {', '.join(formula_info['parametros'])}")
-        if isinstance(valor, str):
-            doc.add_paragraph(f"Resultado: {valor}")
-        else:
-            doc.add_paragraph(f"Resultado: Cc = {valor:.4f}")
-
-    buffer = io.BytesIO()
-    doc.save(buffer)
-    buffer.seek(0)
-    return buffer
 
 def main():
-    st.set_page_config(layout="wide")
-    st.title("Calculadora de Índice de Compresión (Cc)")
-    st.markdown("Introduce los datos disponibles para calcular Cc según diferentes fórmulas.")
+    st.set_page_config(page_title="Portal de Correlaciones Geotécnicas", layout="wide")
 
-    if 'data' not in st.session_state:
-        st.session_state.data = {
-            "Símbolo": ["LL", "PL", "IP", "w", "e", "Gs", "gsat", "gdry", "F", "n"],
-            "Descripción del Parámetro": [
-                "Límite líquido", "Límite plástico", "Índice plástico", "Contenido de humedad",
-                "Relación de vacíos", "Gravedad específica", "Peso unitario saturado", "Peso unitario seco",
-                "Porcentaje de grano fino (arcilla y limo)", "Porosidad"
-            ],
-            "Valor": [None, None, None, None, None, None, None, None, None, None],
-            "Unidad": ["%", "%", "%", "%", "", "", "kN/m³", "kN/m³", "%", ""]
+    if 'current_page' not in st.session_state:
+        st.session_state.current_page = "portal"
+
+    if st.session_state.current_page == "portal":
+        show_portal()
+    elif st.session_state.current_page == "cc":
+        try:
+            import Cc_streamlit_1
+            Cc_streamlit_1.main()
+        except ImportError:
+            st.error("No se pudo cargar la aplicación de Índice de Compresión (Cc).")
+    elif st.session_state.current_page == "angulo_rozamiento":
+        try:
+            import angulo_rozamiento_streamlit
+            angulo_rozamiento_streamlit.main()
+        except ImportError:
+            st.error("No se pudo cargar la aplicación de Ángulo de Rozamiento (φ).")
+    elif st.session_state.current_page == "modulo_elasticidad":
+        try:
+            import modulo_elasticidad_arenas_streamlit
+            modulo_elasticidad_arenas_streamlit.main()
+        except ImportError:
+            st.error("No se pudo cargar la aplicación de Módulo de Elasticidad (E).")
+
+
+def show_portal():
+    st.title("Portal de Correlaciones Geotécnicas")
+    st.markdown("Selecciona una de las siguientes aplicaciones para calcular diferentes parámetros geotécnicos:")
+
+    st.markdown(
+        """
+        <style>
+        .app-card {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            margin: 10px;
+            transition: transform 0.2s;
+            background-color: #f9f9f9;
+            height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
         }
+        .app-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .app-icon {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .app-icon img {
+            width: 80px;
+            height: 80px;
+        }
+        .app-emoji {
+            font-size: 80px;
+        }
+        .app-title {
+            margin: 15px 0 10px 0;
+            font-size: 1.3em;
+            font-weight: bold;
+            text-align: center;
+        }
+        .app-description {
+            text-align: center;
+            color: #555;
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+        
+        /* Estilo de botones verdes */
+        .stButton > button {
+            background-color: #4CAF50 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 5px !important;
+            font-weight: bold !important;
+            padding: 12px 24px !important;
+            width: 100% !important;
+        }
+        .stButton > button:hover {
+            background-color: #45a049 !important;
+            border: none !important;
+        }
+        .stButton > button:focus {
+            background-color: #4CAF50 !important;
+            color: white !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
-    col1, col2 = st.columns([1, 1])
+    col1, col2, col3 = st.columns(3)
 
+    # Índice de Compresión (Cc)
     with col1:
-        df = pd.DataFrame(st.session_state.data)
-        edited_df = st.data_editor(
-            df,
-            num_rows="fixed",
-            hide_index=True,
-            column_config={
-                "Símbolo": st.column_config.TextColumn("Símbolo", disabled=True),
-                "Descripción del Parámetro": st.column_config.TextColumn("Descripción del Parámetro", disabled=True),
-                "Unidad": st.column_config.TextColumn("Unidad", disabled=True)
-            },
-            key="data_editor"
-        )
-
-        if st.button("Calcular Cc"):
-            try:
-                LL = float(edited_df.loc[edited_df["Símbolo"] == "LL", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "LL", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "LL", "Valor"].values[0]) > 0 else None
-            except (ValueError, TypeError):
-                LL = None
-
-            try:
-                PL = float(edited_df.loc[edited_df["Símbolo"] == "PL", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "PL", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "PL", "Valor"].values[0]) > 0 else None
-            except (ValueError, TypeError):
-                PL = None
-
-            try:
-                IP = float(edited_df.loc[edited_df["Símbolo"] == "IP", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "IP", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "IP", "Valor"].values[0]) > 0 else None
-            except (ValueError, TypeError):
-                IP = None
-
-            try:
-                w = float(edited_df.loc[edited_df["Símbolo"] == "w", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "w", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "w", "Valor"].values[0]) > 0 else None
-            except (ValueError, TypeError):
-                w = None
-
-            try:
-                e = float(edited_df.loc[edited_df["Símbolo"] == "e", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "e", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "e", "Valor"].values[0]) > 0 else None
-            except (ValueError, TypeError):
-                e = None
-
-            try:
-                Gs = float(edited_df.loc[edited_df["Símbolo"] == "Gs", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "Gs", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "Gs", "Valor"].values[0]) > 0 else None
-            except (ValueError, TypeError):
-                Gs = None
-
-            try:
-                F = float(edited_df.loc[edited_df["Símbolo"] == "F", "Valor"].values[0]) if edited_df.loc[edited_df["Símbolo"] == "F", "Valor"].values[0] and float(edited_df.loc[edited_df["Símbolo"] == "F", "Valor"].values[0]) > 0 else None
-            except (ValueError, TypeError):
-                F = None
-
-            resultados, formulas_usadas = calcular_Cc(LL=LL, PL=PL, IP=IP, w=w, e=e, Gs=Gs, F=F)
-
-            if resultados:
-                st.subheader("Resultados de Cc según fórmulas aplicables:")
-                for metodo, valor in resultados.items():
-                    st.markdown(f"**{metodo}**")
-                    st.write(f"Fórmula: {formulas_usadas[metodo]['formula']}")
-                    st.write(f"Parámetros usados: {', '.join(formulas_usadas[metodo]['parametros'])}")
-                    if isinstance(valor, str):
-                        st.write(f"Resultado: {valor}")
-                    else:
-                        st.write(f"Resultado: Cc = {valor:.4f}")
-                    st.markdown("---")
-
-                informe_buffer = generar_informe(LL, PL, IP, w, e, Gs, F, resultados, formulas_usadas)
-                st.download_button(
-                    label="Descargar informe en Word",
-                    data=informe_buffer,
-                    file_name="informe_Cc.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                )
-            else:
-                st.warning("No hay suficientes datos para aplicar ninguna fórmula.")
-
-    with col2:
-        with st.expander("Fórmulas Disponibles", expanded=False):
-            st.markdown("""
-            <style>
-            .formula {
-                border-left: 3px solid #4CAF50;
-                padding-left: 10px;
-                margin-bottom: 15px;
-            }
-            </style>
+        st.markdown(
+            """
+            <div class="app-card">
+                <div class="app-icon"><span class="app-emoji">📊</span></div>
+                <div class="app-title">Índice de Compresión (Cc)</div>
+                <div class="app-description">
+                    Calcula el coeficiente de compresibilidad Cc utilizando diferentes correlaciones empíricas.
+                </div>
+            </div>
             """, unsafe_allow_html=True)
+        # Subcolumnas para centrar el botón
+        _, mid1, _ = st.columns([1, 2, 1])
+        with mid1:
+            if st.button("Abrir aplicación", key="cc_button"):
+                st.session_state.current_page = "cc"
+                st.rerun()
 
-            formulas = [
-                {"name": "Terzaghi & Peck (1967)", "formula": "Cc = 0.009 × (LL - 10)", "params": "LL"},
-                {"name": "Azzouz et al. (1976, arcillas remoldeadas)", "formula": "Cc = 0.007 × (LL - 7)", "params": "LL"},
-                {"name": "Azzouz et al. (1976, arcillas brasileñas)", "formula": "Cc = 0.0046 × (LL - 9)", "params": "LL"},
-                {"name": "Mayne (1980)", "formula": "Cc = (LL - 13) / 109", "params": "LL"},
-                {"name": "Hough (1957)", "formula": "Cc = 0.3 × (e - 0.27)", "params": "e"},
-                {"name": "Azzouz et al. (1976, todas las arcillas)", "formula": "Cc = 0.156 × e + 0.0107", "params": "e"},
-                {"name": "Azzouz et al. (1976, baja plasticidad)", "formula": "Cc = 0.75 × (e - 0.5)", "params": "e"},
-                {"name": "Azzouz et al. (1976, São Paulo)", "formula": "Cc = 1.21 + 1.005 × (e - 1.87)", "params": "e"},
-                {"name": "Nishida (1956)", "formula": "Cc = 1.15 × (e - 0.35)", "params": "e"},
-                {"name": "Azzouz et al. (1976, suelos orgánicos)", "formula": "Cc = 0.0115 × w", "params": "w"},
-                {"name": "Koppula (1981, a)", "formula": "Cc = 0.0093 × w", "params": "w"},
-                {"name": "Azzouz et al. (1976, Chicago 2)", "formula": "Cc = 17.66 × 10⁻⁵ × w² + 5.93 × 10⁻³ × w - 0.135", "params": "w"},
-                {"name": "Azzouz et al. (1976, 678 datos)", "formula": "Cc = 0.37 × (e + 0.003 × LL + 0.0004 × w - 0.34)", "params": "e, LL, w"},
-                {"name": "Wroth & Wood (1978)", "formula": "Cc = 0.005 × Gs × IP", "params": "Gs, IP"},
-                {"name": "Nakase et al. (1988)", "formula": "Cc = 0.046 + 0.0104 × IP", "params": "IP"},
-                {"name": "Koppula (1981, b)", "formula": "Cc = -0.0997 + 0.009 × LL + 0.0014 × IP + 0.0036 × w + 0.1156 × e + 0.0025 × F", "params": "LL, IP, w, e, F"},
-                {"name": "Carrier (1985)", "formula": "Cc = 0.329 × (0.01 × w × Gs - 0.027 × PL + 0.0133 × IP × (1.192 + F / IP))", "params": "w, Gs, PL, IP, F"}
-            ]
+    # Ángulo de Rozamiento (φ)
+    with col2:
+        st.markdown(
+            """
+            <div class="app-card">
+                <div class="app-icon">
+                    <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" alt="Ángulo de rozamiento">
+                </div>
+                <div class="app-title">Ángulo de Rozamiento (φ)</div>
+                <div class="app-description">
+                    Calcula el ángulo de rozamiento utilizando diferentes correlaciones empíricas.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        _, mid2, _ = st.columns([1, 2, 1])
+        with mid2:
+            if st.button("Abrir aplicación", key="ar_button"):
+                st.session_state.current_page = "angulo_rozamiento"
+                st.rerun()
 
-            for formula in formulas:
-                st.markdown(f'<div class="formula"><b>{formula["name"]}</b><br>Fórmula: {formula["formula"]}<br>Parámetros: {formula["params"]}</div>', unsafe_allow_html=True)
+    # Módulo de Elasticidad (E)
+    with col3:
+        st.markdown(
+            """
+            <div class="app-card">
+                <div class="app-icon">
+                    <img src="https://cdn-icons-png.flaticon.com/512/3174/3174705.png" alt="Módulo de elasticidad">
+                </div>
+                <div class="app-title">Módulo de Elasticidad (E)</div>
+                <div class="app-description">
+                    Calcula el módulo de elasticidad para arenas utilizando diferentes fórmulas empíricas.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        _, mid3, _ = st.columns([1, 2, 1])
+        with mid3:
+            if st.button("Abrir aplicación", key="me_button"):
+                st.session_state.current_page = "modulo_elasticidad"
+                st.rerun()
+
 
 if __name__ == "__main__":
     main()
