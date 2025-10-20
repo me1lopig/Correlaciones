@@ -20,7 +20,7 @@ def calcular_angulo_rozamiento(IP=None, Nspt=None):
     if IP is not None:
         # Fórmula de Jimenes Salas y Justo Alpañes
         phi = 1.1616 * IP
-        resultados['Jimenes Salas y Justo Alpañes'] = phi if phi > 0 else "Valor no aceptable para los datos introducidos"
+        resultados['Jimenes Salas y Justo Alpañes'] = phi 
         formulas_usadas['Jimenes Salas y Justo Alpañes'] = {'formula': 'φ ≈ 1.1616 × IP', 'parametros': ['IP']}
 
     if Nspt is not None:
@@ -36,7 +36,7 @@ def calcular_angulo_rozamiento(IP=None, Nspt=None):
 
         # Fórmula de Terzaghi & Peck 1948
         phi = 2.1500 * Nspt
-        resultados['Terzaghi & Peck 1948'] = phi if phi <= 45 else 45
+        resultados['Terzaghi & Peck 1948'] = phi
         formulas_usadas['Terzaghi & Peck 1948'] = {'formula': 'φ ≈ 2.1500 × Nspt', 'parametros': ['Nspt']}
 
         # Fórmula de Kishida, 1969
