@@ -26,12 +26,12 @@ def calcular_angulo_rozamiento(IP=None, Nspt=None):
     if Nspt is not None:
         # Fórmula de Peck
         phi = 2.0986 * Nspt
-        resultados['Peck'] = phi if phi <= 45 else 45  # Limitar a 45 grados
+        resultados['Peck'] = phi
         formulas_usadas['Peck'] = {'formula': 'φ ≈ 2.0986 × Nspt', 'parametros': ['Nspt']}
 
         # Fórmula de Muromachi, 1974
         phi = 2.2370 * Nspt
-        resultados['Muromachi, 1974'] = phi if phi <= 45 else 45
+        resultados['Muromachi, 1974'] = phi 
         formulas_usadas['Muromachi, 1974'] = {'formula': 'φ ≈ 2.2370 × Nspt', 'parametros': ['Nspt']}
 
         # Fórmula de Terzaghi & Peck 1948
@@ -41,32 +41,32 @@ def calcular_angulo_rozamiento(IP=None, Nspt=None):
 
         # Fórmula de Kishida, 1969
         phi = 2.1547 * Nspt
-        resultados['Kishida, 1969'] = phi if phi <= 45 else 45
+        resultados['Kishida, 1969'] = phi 
         formulas_usadas['Kishida, 1969'] = {'formula': 'φ ≈ 2.1547 × Nspt', 'parametros': ['Nspt']}
 
         # Fórmula de Japan National Railway, 1999
         phi = 2.1000 * Nspt
-        resultados['Japan National Railway, 1999'] = phi if phi <= 45 else 45
+        resultados['Japan National Railway, 1999'] = phi
         formulas_usadas['Japan National Railway, 1999'] = {'formula': 'φ ≈ 2.1000 × Nspt', 'parametros': ['Nspt']}
 
         # Fórmula de Japan Road Bureau, 1986
         phi = 1.7906 * Nspt + 15
-        resultados['Japan Road Bureau, 1986'] = phi if phi <= 45 else 45
+        resultados['Japan Road Bureau, 1986'] = phi
         formulas_usadas['Japan Road Bureau, 1986'] = {'formula': 'φ ≈ 1.7906 × Nspt + 15', 'parametros': ['Nspt']}
 
         # Fórmula de Hatanaka & Uchida, 1996
         phi = 2.4880 * Nspt
-        resultados['Hatanaka & Uchida, 1996'] = phi if phi <= 45 else 45
+        resultados['Hatanaka & Uchida, 1996'] = phi 
         formulas_usadas['Hatanaka & Uchida, 1996'] = {'formula': 'φ ≈ 2.4880 × Nspt', 'parametros': ['Nspt']}
 
         # Fórmula de Montenegro & Gonzalez
         phi = 2.1657 * Nspt
-        resultados['Montenegro & Gonzalez'] = phi if phi <= 45 else 45
+        resultados['Montenegro & Gonzalez'] = phi
         formulas_usadas['Montenegro & Gonzalez'] = {'formula': 'φ ≈ 2.1657 × Nspt', 'parametros': ['Nspt']}
 
         # Fórmula de Shiol-Fukuni 1982
         phi = 2.0000 * Nspt + 15
-        resultados['Shiol-Fukuni 1982'] = phi if phi <= 45 else 45
+        resultados['Shiol-Fukuni 1982'] = phi 
         formulas_usadas['Shiol-Fukuni 1982'] = {'formula': 'φ ≈ 2.0000 × Nspt + 15', 'parametros': ['Nspt']}
 
     return resultados, formulas_usadas
