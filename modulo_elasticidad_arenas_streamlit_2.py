@@ -4,14 +4,14 @@ import plotly.express as px
 from io import BytesIO
 import copy
 from docx import Document
-from docx.shared import Inches, Pt
+from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
 
 # ==============================================================================
 # CONFIGURACIÓN Y CONSTANTES
 # ==============================================================================
-st.set_page_config(page_title="Geotech Calc: Módulo de Elasticidad", layout="wide")
+st.set_page_config(page_title="E Suelos Granulares", layout="wide")
 
 FACTOR_KG_CM2_A_MPA = 0.0980665
 
@@ -92,43 +92,78 @@ def aplicar_filtro_suelo(df, tipo_suelo):
     return df_filtrado
 
 # ==========================================
-# 3. GENERADOR DE INFORME WORD
+# 3. GENERADOR DE INFORME WORD (Estilo CTE_2219)
 # ==========================================
 def generar_docx(n_val, df_final, df_stats, fig_plotly_original, tipo_suelo_selec):
     doc = Document()
     
-    # Márgenes
+    # --- 1. CONFIGURACIÓN DE ESTILOS DEL DOCUMENTO MODELO ---
+    # Colores extraídos del documento modelo
+    COLOR_TITULO = RGBColor(0x17, 0x36, 0x5D)  # Azul Oscuro
+    COLOR_HEADING = RGBColor(0x36, 0x5F, 0x91) # Azul Medio
+    
+    # Configurar Márgenes (1.25" laterales, 1.0" verticales)
     for section in doc.sections:
-        section.left_margin = Inches(0.8)
-        section.right_margin = Inches(0.8)
+        section.left_margin = Inches(1.25)
+        section.right_margin = Inches(1.25)
+        section.top_margin = Inches(1.0)
+        section.bottom_margin = Inches(1.0)
 
-    style = doc.styles['Normal']
-    style.font.name = 'Calibri'
-    style.font.size = Pt(11)
+    # Configurar Fuente Normal (Calibri 11pt)
+    style_normal = doc.styles['Normal']
+    style_normal.font.name = 'Calibri'
+    style_normal.font.size = Pt(11)
 
-    doc.add_heading('Informe de resultados', 0).alignment = WD_ALIGN_PARAGRAPH.CENTER
-    doc.add_paragraph(f'Fecha: {pd.Timestamp.now().strftime("%d/%m/%Y")}').alignment = WD_ALIGN_PARAGRAPH.CENTER
-    doc.add_paragraph('---')
+    # Configurar Título (Title)
+    style_title = doc.styles['Title']
+    style_title.font.name = 'Calibri Light' # Suele ser Light en temas modernos de Word
+    style_title.font.size = Pt(26)
+    style_title.font.color.rgb = COLOR_TITULO
+    
+    # Configurar Encabezados (Heading 1)
+    style_h1 = doc.styles['Heading 1']
+    style_h1.font.name = 'Calibri Light'
+    style_h1.font.size = Pt(14)
+    style_h1.font.color.rgb = COLOR_HEADING
+    
+    # --- 2. CONTENIDO DEL INFORME ---
 
+    # Título Principal
+    doc.add_heading('Informe estimación Módulo de Elasticidad en Suelos Granulares', 0).alignment = WD_ALIGN_PARAGRAPH.LEFT
+    
+    # Fecha negrita
+    p_fecha = doc.add_paragraph()
+    p_fecha.add_run(f'Fecha de emisión: {pd.Timestamp.now().strftime("%d/%m/%Y")}').bold = True
+    p_fecha.alignment = WD_ALIGN_PARAGRAPH.LEFT
+    #doc.add_paragraph('---')
+
+    # Sección 1
     doc.add_heading('1. Datos de Entrada', level=1)
     p = doc.add_paragraph()
-    p.add_run(f'Valor N (SPT) de diseño: ').bold = True
+    p.add_run(f'• Valor N (SPT) de diseño: ').bold = True
     p.add_run(f'{n_val} golpes/30 cm')
     
     p2 = doc.add_paragraph()
-    p2.add_run(f'Tipo de suelo: ').bold = True
+    p2.add_run(f'• Tipo de suelo seleccionado: ').bold = True
     p2.add_run(f'{tipo_suelo_selec}')
 
-    # --- TABLA PRINCIPAL ---
+    # Sección 2 - Tabla Principal
     doc.add_heading('2. Métodos de Cálculo Seleccionados', level=1)
+    
+    # Tabla con estilo "Light List Accent 1" (Estilo del modelo)
     table = doc.add_table(rows=1, cols=4)
-    table.style = 'Table Grid'
+    try:
+        table.style = 'Light List Accent 1'
+    except:
+        table.style = 'Table Grid' # Fallback si no encuentra el estilo exacto
+        
     table.autofit = False 
     table.allow_autofit = False
     
-    widths = [Inches(2.2), Inches(1.8), Inches(2.0), Inches(1.0)]
+    widths = [Inches(2.0), Inches(1.5), Inches(2.0), Inches(1.0)] # Ajustados para margen 1.25"
     headers = ['Autor', 'Aplicación', 'Fórmula Original', 'E (MPa)']
     
+    # Encabezados
     for i, h in enumerate(headers):
         cell = table.rows[0].cells[i]
         cell.text = h
@@ -137,6 +172,7 @@ def generar_docx(n_val, df_final, df_stats, fig_plotly_original, tipo_suelo_sele
         cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
         cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
         
+    # Filas de datos
     for _, row in df_final.iterrows():
         row_cells = table.add_row().cells
         textos = [str(row['Autor']), str(row['Aplicación']), str(row['Fórmula Original']), f"{row['E (MPa)']:.2f}"]
@@ -146,12 +182,16 @@ def generar_docx(n_val, df_final, df_stats, fig_plotly_original, tipo_suelo_sele
             row_cells[idx].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
             row_cells[idx].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
 
-    # --- TABLA ESTADÍSTICA ---
+    # Sección 3 - Estadísticas
     doc.add_heading('3. Análisis Estadístico', level=1)
     if df_stats is not None:
         doc.add_paragraph('Resumen estadístico de los métodos seleccionados:')
         stat_table = doc.add_table(rows=1, cols=5)
-        stat_table.style = 'Table Grid'
+        try:
+            stat_table.style = 'Light List Accent 1'
+        except:
+            stat_table.style = 'Table Grid'
+            
         stat_table.alignment = WD_TABLE_ALIGNMENT.CENTER
         stat_table.autofit = True
         
@@ -172,13 +212,12 @@ def generar_docx(n_val, df_final, df_stats, fig_plotly_original, tipo_suelo_sele
     else:
         doc.add_paragraph('No procede cálculo estadístico (selección insuficiente).')
 
-    # --- GRÁFICA PARA WORD ---
+    # Sección 4 - Gráfica
     doc.add_heading('4. Gráfica Comparativa', level=1)
     try:
-        # Clonamos y re-configuramos para asegurar calidad en Word
+        # Clonamos y re-configuramos
         fig_word = copy.deepcopy(fig_plotly_original)
         
-        # Mismas reglas: Texto negro y tamaño fijo
         fig_word.update_traces(
             textfont_size=14,
             textfont_color='black'
@@ -188,18 +227,22 @@ def generar_docx(n_val, df_final, df_stats, fig_plotly_original, tipo_suelo_sele
             uniformtext_mode='show'
         )
 
-        # Exportamos con alta resolución y anchura
+        # Exportamos con alta resolución
         img_bytes = fig_word.to_image(format="png", width=1300, height=len(df_final)*60 + 200, scale=3)
         
         doc.add_paragraph().alignment = WD_ALIGN_PARAGRAPH.CENTER
-        doc.paragraphs[-1].add_run().add_picture(BytesIO(img_bytes), width=Inches(6.5))
+        # Ajustamos el ancho al nuevo ancho de página (6.0 pulgadas aprox con margen 1.25)
+        doc.paragraphs[-1].add_run().add_picture(BytesIO(img_bytes), width=Inches(6.0))
     except Exception as e:
         doc.add_paragraph(f"[Gráfica no disponible: {str(e)}]")
 
     doc.add_heading('5. Referencias Bibliográficas', level=1)
     for ref in BIBLIOGRAFIA:
-        p = doc.add_paragraph(ref)
-        p.paragraph_format.space_after = Pt(6) 
+        #p = doc.add_paragraph(ref)
+        p = doc.add_paragraph(ref, style='List Bullet')
+        p.style.font.name = 'Calibri'
+        p.style.font.size = Pt(11)
+        p.paragraph_format.space_after = Pt(6)
 
     buffer = BytesIO()
     doc.save(buffer)
@@ -210,7 +253,7 @@ def generar_docx(n_val, df_final, df_stats, fig_plotly_original, tipo_suelo_sele
 # 4. INTERFAZ STREAMLIT
 # ==========================================
 
-st.title("📊 Estimación Módulo de Elasticidad en Suelos Granulares")
+st.title("🏖️ Estimación Módulo de Elasticidad en Suelos Granulares")
 st.markdown("---")
 
 # --- CONTROL DE ESTADO ---
@@ -219,11 +262,11 @@ if 'tipo_suelo_previo' not in st.session_state: st.session_state.tipo_suelo_prev
 if 'selecciones' not in st.session_state: st.session_state.selecciones = {}
 
 with st.sidebar:
-    st.header("1. Valores de N (SPT)")
+    st.header("1.⚙️Valores de N (SPT)")
     n_spt = st.number_input("Valor N (SPT) de diseño:", min_value=1, max_value=100, value=15, step=1)
     
     st.markdown("---")
-    st.header("2. Tipos de Suelo")
+    st.header("2. 🏜️ Tipos de Suelo")
     tipo_suelo = st.selectbox(
         "Tipo de Suelo (Aplicación):",
         ["Arenas", "Gravas", "Limos", "Suelos Intermedios", "Mostrar Todo"],
@@ -255,7 +298,7 @@ def get_seleccion(row):
 df_filtrado.insert(0, "Seleccionar", df_filtrado.apply(get_seleccion, axis=1))
 
 # --- EDITOR DE DATOS ---
-st.subheader(f"1. Tipo de Suelo: {tipo_suelo}")
+st.subheader(f"1.🏜️Tipo de Suelo: {tipo_suelo}")
 
 col_config = {
     "Seleccionar": st.column_config.CheckboxColumn("Incluir", width="small"),
@@ -280,7 +323,7 @@ df_final = df_editado[df_editado["Seleccionar"] == True].drop(columns=["Seleccio
 num_seleccionados = len(df_final)
 
 if num_seleccionados > 0:
-    st.subheader("2. Visualización Gráfica")
+    st.subheader("2.📊 Visualización Gráfica")
     
     # Texto combinado
     df_final["Texto_Barra"] = df_final["Autor"] + " (" + df_final["Aplicación"] + "): " + df_final["E (MPa)"].map('{:.1f}'.format) + " MPa"
@@ -301,9 +344,6 @@ if num_seleccionados > 0:
     )
     
     # --- CONFIGURACIÓN PARA IGUALAR TAMAÑOS ---
-    # 1. uniformtext_mode='show' -> Muestra el texto sí o sí.
-    # 2. uniformtext_minsize=14 -> Prohíbe reducir la letra por debajo de 14.
-    # 3. textfont_color='black' -> Asegura legibilidad si el texto se sale de la barra (fondo blanco).
     fig.update_layout(
         uniformtext_minsize=14, 
         uniformtext_mode='show',
@@ -311,12 +351,12 @@ if num_seleccionados > 0:
         xaxis_title="E (MPa)",
         legend=dict(
             orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1
+            yanchor="top",       # Anclado a la parte superior de la leyenda
+            y=-0.15,             # Colocado debajo del eje X
+            xanchor="center",    # Centrado horizontalmente
+            x=0.5
         ),
-        margin=dict(l=0, r=0, t=80, b=20),
+        margin=dict(l=0, r=0, t=40, b=100), # Margen inferior aumentado para la leyenda
         height=200 + (len(df_final) * 50) 
     )
     
@@ -329,7 +369,7 @@ if num_seleccionados > 0:
     
     st.plotly_chart(fig, use_container_width=True)
     
-    st.subheader("3. Análisis Estadístico")
+    st.subheader("3.💻Análisis Estadístico")
     df_stats = None
     if num_seleccionados >= 2:
         df_stats = pd.DataFrame({
@@ -357,7 +397,7 @@ if num_seleccionados > 0:
         for ref in BIBLIOGRAFIA:
             st.markdown(f"- {ref}")
 
-    st.write("📥 **Generar Informe**")
+    st.subheader("4.📜Generar Informe")
     docx_file = generar_docx(n_spt, df_final, df_stats, fig, tipo_suelo)
     st.download_button("📄 Descargar Informe Word (.docx)", 
     docx_file, f"Informe_E_granular.docx", 
@@ -365,3 +405,6 @@ if num_seleccionados > 0:
 
 else:
     st.warning("⚠️ No hay métodos seleccionados para este grupo.")
+
+# Disclaimer
+st.info("⚠️ **Aviso de Responsabilidad:** Estas correlaciones son empíricas. Se recomienda contrastar estos valores con ensayos in situ (presiómetro, dilatómetro) o de laboratorio.")
