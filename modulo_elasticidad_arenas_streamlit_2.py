@@ -106,17 +106,17 @@ def generar_docx(n_val, df_final, df_stats, fig_plotly_original, tipo_suelo_sele
     style.font.name = 'Calibri'
     style.font.size = Pt(11)
 
-    doc.add_heading('Informe de Estimación Geotécnica', 0).alignment = WD_ALIGN_PARAGRAPH.CENTER
+    doc.add_heading('Informe de resultados', 0).alignment = WD_ALIGN_PARAGRAPH.CENTER
     doc.add_paragraph(f'Fecha: {pd.Timestamp.now().strftime("%d/%m/%Y")}').alignment = WD_ALIGN_PARAGRAPH.CENTER
     doc.add_paragraph('---')
 
     doc.add_heading('1. Datos de Entrada', level=1)
     p = doc.add_paragraph()
     p.add_run(f'Valor N (SPT) de diseño: ').bold = True
-    p.add_run(f'{n_val} golpes/pie')
+    p.add_run(f'{n_val} golpes/30 cm')
     
     p2 = doc.add_paragraph()
-    p2.add_run(f'Filtro de Suelo Aplicado: ').bold = True
+    p2.add_run(f'Tipo de suelo: ').bold = True
     p2.add_run(f'{tipo_suelo_selec}')
 
     # --- TABLA PRINCIPAL ---
@@ -210,7 +210,7 @@ def generar_docx(n_val, df_final, df_stats, fig_plotly_original, tipo_suelo_sele
 # 4. INTERFAZ STREAMLIT
 # ==========================================
 
-st.title("📊 Calculadora Geotécnica Profesional")
+st.title("📊 Estimación Módulo de Elasticidad en Suelos Granulares")
 st.markdown("---")
 
 # --- CONTROL DE ESTADO ---
@@ -219,11 +219,11 @@ if 'tipo_suelo_previo' not in st.session_state: st.session_state.tipo_suelo_prev
 if 'selecciones' not in st.session_state: st.session_state.selecciones = {}
 
 with st.sidebar:
-    st.header("1. Datos del Terreno")
+    st.header("1. Valores de N (SPT)")
     n_spt = st.number_input("Valor N (SPT) de diseño:", min_value=1, max_value=100, value=15, step=1)
     
     st.markdown("---")
-    st.header("2. Filtro Litológico")
+    st.header("2. Tipos de Suelo")
     tipo_suelo = st.selectbox(
         "Tipo de Suelo (Aplicación):",
         ["Arenas", "Gravas", "Limos", "Suelos Intermedios", "Mostrar Todo"],
@@ -255,7 +255,7 @@ def get_seleccion(row):
 df_filtrado.insert(0, "Seleccionar", df_filtrado.apply(get_seleccion, axis=1))
 
 # --- EDITOR DE DATOS ---
-st.subheader(f"1. Métodos para: {tipo_suelo}")
+st.subheader(f"1. Tipo de Suelo: {tipo_suelo}")
 
 col_config = {
     "Seleccionar": st.column_config.CheckboxColumn("Incluir", width="small"),
@@ -300,7 +300,7 @@ if num_seleccionados > 0:
         color_discrete_sequence=px.colors.qualitative.Prism
     )
     
-    # --- CONFIGURACIÓN CRÍTICA PARA IGUALAR TAMAÑOS ---
+    # --- CONFIGURACIÓN PARA IGUALAR TAMAÑOS ---
     # 1. uniformtext_mode='show' -> Muestra el texto sí o sí.
     # 2. uniformtext_minsize=14 -> Prohíbe reducir la letra por debajo de 14.
     # 3. textfont_color='black' -> Asegura legibilidad si el texto se sale de la barra (fondo blanco).
@@ -359,7 +359,9 @@ if num_seleccionados > 0:
 
     st.write("📥 **Generar Informe**")
     docx_file = generar_docx(n_spt, df_final, df_stats, fig, tipo_suelo)
-    st.download_button("📄 Descargar Informe Word (.docx)", docx_file, f"Informe_Geotecnico_N{n_spt}.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    st.download_button("📄 Descargar Informe Word (.docx)", 
+    docx_file, f"Informe_E_granular.docx", 
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",type="primary")
 
 else:
     st.warning("⚠️ No hay métodos seleccionados para este grupo.")
