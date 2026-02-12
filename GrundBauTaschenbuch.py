@@ -224,7 +224,7 @@ with tab1:
             st.info("Gráfico de composición no disponible para este rango.")
 
 with tab2:
-    st.subheader("Parámetros de Diseño")
+    st.subheader("Parámetros Mecánicos")
     
     # Fila 1: Resistencia
     c1, c2 = st.columns(2)
