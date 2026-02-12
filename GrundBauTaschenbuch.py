@@ -2,41 +2,88 @@ import streamlit as st
 import pandas as pd
 import io
 import numpy as np
+import plotly.graph_objects as go
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="Ficha Geotécnica", page_icon="🏗️", layout="wide")
+st.set_page_config(
+    page_title="Propiedades de Materiales",
+    page_icon="🏗️",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# --- ESTILOS CSS PROFESIONALES ---
+# --- ESTILOS CSS AVANZADOS ---
 st.markdown("""
 <style>
-    /* Estilo para la tabla de datos principal */
-    .dataframe {
-        font-size: 14px !important;
-        font-family: 'Segoe UI', sans-serif;
+    /* Fuente principal */
+    .main {
+        background-color: #fcfcfc;
     }
-    /* Encabezados de métricas */
-    div[data-testid="metric-container"] {
-        background-color: #f8f9fa;
-        border: 1px solid #e9ecef;
-        padding: 10px;
-        border-radius: 8px;
-        box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+    
+    /* Tarjetas de Métricas */
+    .metric-card {
+        background-color: white;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: transform 0.2s;
+        height: 100%;
     }
-    /* Título del suelo */
-    .soil-title {
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        border-color: #3498db;
+    }
+    .metric-label {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 5px;
+    }
+    .metric-value {
         color: #2c3e50;
-        font-size: 2.5em;
+        font-size: 1.6rem;
         font-weight: 700;
-        margin-bottom: 0px;
-        border-bottom: 3px solid #3498db;
-        padding-bottom: 10px;
+        font-family: 'Segoe UI', monospace;
     }
-    .category-header {
+    .metric-unit {
+        font-size: 0.9rem;
+        color: #95a5a6;
+        font-weight: normal;
+    }
+    
+    /* Título Principal */
+    .soil-header {
+        font-family: 'Helvetica Neue', sans-serif;
+        color: #1a252f;
+        font-size: 2.2rem;
+        font-weight: 800;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #3498db;
+        margin-bottom: 25px;
+    }
+    
+    /* Ajustes de Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 10px;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: #f1f2f6;
+        border-radius: 5px 5px 0 0;
+        border: 1px solid #e0e0e0;
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    .stTabs [aria-selected="true"] {
+        background-color: white;
+        border-bottom: 2px solid #3498db;
         color: #3498db;
-        font-size: 1.2em;
         font-weight: bold;
-        margin-top: 20px;
-        margin-bottom: 10px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -83,116 +130,159 @@ Fango,--,--,100,30,50,12.5,2.5,200,0.4,22,20,--,1.1e-07
     df = pd.read_csv(io.StringIO(csv_data))
     df['Tipo de suelo'] = df['Tipo de suelo'].replace('', np.nan).ffill()
     
-    # Columnas numéricas a procesar
     numeric_cols = ['LL', 'LP', 'IP', 'Gamma_aparente', 'Gamma_sumergido', 
                     'Humedad', 'E_mod', 'Phi', 'Cohesion', 'Phi_res', 'Permeabilidad']
     
     for col in numeric_cols:
         df[col] = pd.to_numeric(df[col], errors='coerce')
 
-    # Función para formatear rango "min - max"
     def format_range(series):
-        # Eliminamos NaNs
         vals = series.dropna().values
-        if len(vals) == 0:
-            return "--"
+        if len(vals) == 0: return "--"
+        vmin, vmax = np.min(vals), np.max(vals)
         
-        vmin = np.min(vals)
-        vmax = np.max(vals)
-        
-        # Caso especial: Permeabilidad (Notación científica)
         if series.name == 'Permeabilidad':
-            # Ordenar para que siempre sea min a max (ej 1e-9 a 1e-7)
-            # Nota: en geotecnia a veces se da rango inverso k_h vs k_v, pero asumiremos rango magnitud
-            r_min = min(vmin, vmax)
-            r_max = max(vmin, vmax)
-            if r_min == r_max:
-                return f"{r_min:.1e}"
+            r_min, r_max = min(vmin, vmax), max(vmin, vmax)
+            if r_min == r_max: return f"{r_min:.1e}"
             return f"{r_min:.1e} ... {r_max:.1e}"
             
-        # Caso normal
-        if vmin == vmax:
-            return f"{vmin:g}"
-        else:
-            return f"{vmin:g} - {vmax:g}"
+        if vmin == vmax: return f"{vmin:g}"
+        return f"{vmin:g} - {vmax:g}"
 
-    # Agrupamos por suelo y aplicamos el formateo
     df_grouped = df.groupby('Tipo de suelo')[numeric_cols].agg(format_range).reset_index()
-    
-    # Recuperamos columnas de texto (Granulometría) tomando el primer valor no nulo
     df_text = df.groupby('Tipo de suelo')[['Granulometria_<0.06', 'Granulometria_<2.0']].first().reset_index()
-    
-    # Merge final
     df_final = pd.merge(df_text, df_grouped, on='Tipo de suelo')
     
-    return df_final, df # Devolvemos la formateada y la raw
+    return df_final
 
-df_formatted, df_raw = load_and_process_data()
+# Función auxiliar para renderizar tarjetas HTML
+def card(label, value, unit=""):
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-label">{label}</div>
+        <div class="metric-value">{value} <span class="metric-unit">{unit}</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+
+df_formatted = load_and_process_data()
 
 # --- SIDEBAR ---
-st.sidebar.header("🔍 Filtros")
-selected_soil = st.sidebar.selectbox("Seleccionar Suelo", df_formatted['Tipo de suelo'].unique())
+with st.sidebar:
+    st.header("🏝️ Tipo de suelo")
+    selected_soil = st.selectbox("Seleccionar Material", df_formatted['Tipo de suelo'].unique())
+    st.markdown("---")
+    st.info("Base de datos referencial basada en el *Grundbau-Taschenbuch*. Los valores son indicativos para pre-dimensionamiento.")
 
 # --- MAIN DISPLAY ---
-# Filtramos la fila única
 row = df_formatted[df_formatted['Tipo de suelo'] == selected_soil].iloc[0]
 
-st.markdown(f"<div class='soil-title'>{selected_soil}</div>", unsafe_allow_html=True)
-st.markdown("Valores característicos (Rango Min - Max)")
+# Título
+st.markdown(f"<div class='soil-header'>{selected_soil}</div>", unsafe_allow_html=True)
 
-# --- VISUALIZACIÓN EN UNA SOLA FILA AGRUPADA (ESTILO DASHBOARD) ---
+# Tabs principales
+tab1, tab2, tab3 = st.tabs(["📊 Identificación y Estado", "⚙️ Parámetros Mecánicos", "💧 Permeabilidad"])
 
-# Grupo 1: Identificación y Estado
-st.markdown("<div class='category-header'>1. Identificación y Estado</div>", unsafe_allow_html=True)
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.metric("Granulometría <0.06mm", row['Granulometria_<0.06'] + "%" if "<" not in str(row['Granulometria_<0.06']) else row['Granulometria_<0.06'])
-c2.metric("Límite Líquido (LL)", row['LL'], help="Porcentaje de humedad")
-c3.metric("Índice Plástico (IP)", row['IP'])
-c4.metric("Humedad Natural", row['Humedad'] + "%")
-c5.metric("Peso Específico (γ)", row['Gamma_aparente'] + " kN/m³")
+with tab1:
+    col_metrics, col_chart = st.columns([2, 1])
+    
+    with col_metrics:
+        st.subheader("Parámetros Físicos")
+        c1, c2, c3 = st.columns(3)
+        with c1: card("Peso Específico (γ)", row['Gamma_aparente'], "kN/m³")
+        with c2: card("Humedad (w)", row['Humedad'], "%")
+        with c3: card("Índice Plástico (IP)", row['IP'], "%")
+        
+        st.write("") # Espaciador
+        
+        c4, c5, c6 = st.columns(3)
+        with c4: card("Límite Líquido", row['LL'], "%")
+        with c5: card("Límite Plástico", row['LP'], "%")
+        with c6: card("Finos (<0.06mm)", row['Granulometria_<0.06'], "%")
 
-# Grupo 2: Resistencia y Deformación
-st.markdown("<div class='category-header'>2. Resistencia y Deformación</div>", unsafe_allow_html=True)
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Ángulo Fricción (φ')", row['Phi'] + "°")
-c2.metric("Cohesión (c')", row['Cohesion'] + " kPa")
-c3.metric("Módulo Young (E)", row['E_mod'] + " MPa")
-c4.metric("Fricción Residual", row['Phi_res'] + "°")
+    with col_chart:
+        # Gráfico estimativo de composición (Parsing simple para visualización)
+        try:
+            finos_str = str(row['Granulometria_<0.06']).replace('<', '').replace('>', '')
+            finos_val = float(finos_str)
+            gruesos_val = 100 - finos_val
+            
+            fig = go.Figure(data=[go.Pie(
+                labels=['Finos (Limo/Arcilla)', 'Gruesos (Arena/Grava)'],
+                values=[finos_val, gruesos_val],
+                hole=.6,
+                marker=dict(colors=['#3498db', '#ecf0f1'])
+            )])
+            fig.update_layout(
+                showlegend=False, 
+                height=250, 
+                margin=dict(l=0, r=0, t=30, b=0),
+                annotations=[dict(text=f'{finos_val}%', x=0.5, y=0.5, font_size=20, showarrow=False)],
+                title="Contenido de Finos (aprox)"
+            )
+            st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+        except:
+            st.info("Gráfico de composición no disponible para este rango.")
 
-# Grupo 3: Hidráulica
-st.markdown("<div class='category-header'>3. Hidráulica</div>", unsafe_allow_html=True)
-k_val = row['Permeabilidad'].replace("e", "x10^") # Formato visual bonito
-st.metric("Permeabilidad (k)", k_val + " m/s")
+with tab2:
+    st.subheader("Parámetros de Diseño")
+    
+    # Fila 1: Resistencia
+    c1, c2 = st.columns(2)
+    with c1: card("Ángulo de Fricción (φ')", row['Phi'], "°")
+    with c2: card("Cohesión Efectiva (c')", row['Cohesion'], "kPa")
+    
+    st.write("")
+    
+    # Fila 2: Rigidez
+    c3, c4 = st.columns(2)
+    with c3: card("Módulo de Young (E)", row['E_mod'], "MPa")
+    with c4: card("Fricción Residual", row['Phi_res'], "°")
+    
+    st.caption("Nota: Los valores de E corresponden a rangos típicos para condiciones de carga estática.")
 
-st.divider()
+with tab3:
+    c1, c2 = st.columns([1, 2])
+    with c1:
+        st.markdown("### Permeabilidad (k)")
+        st.markdown("Capacidad del suelo para transmitir agua.")
+        # Formatear bonito la notación científica
+        k_val = row['Permeabilidad']
+        st.markdown(f"""
+        <div style="font-size: 2.5rem; font-weight: bold; color: #2980b9;">
+            {k_val.split('...')[0]} <span style="font-size: 1rem; color: #7f8c8d;">m/s</span>
+        </div>
+        """, unsafe_allow_html=True)
+        if "..." in k_val:
+            st.caption(f"Rango máximo hasta: {k_val.split('...')[1]}")
+            
+    with c2:
+        st.info("💡 **Interpretación:**\n\n* **10⁻² a 10⁻⁵**: Muy permeable (Gravas/Arenas limpias)\n* **10⁻⁵ a 10⁻⁷**: Poco permeable (Arenas finas/Limos)\n* **< 10⁻⁷**: Impermeable (Arcillas)")
 
-# --- TABLA DE UNA SOLA FILA (SOLICITUD EXPLICITA) ---
-st.subheader("📋 Ficha Resumen (Fila Única)")
-st.caption("Esta tabla contiene todos los datos consolidados en una sola fila para copiar o reportar.")
+st.markdown("---")
 
-# Renombramos columnas para que sean más legibles en la tabla
+# --- TABLA RESUMEN MEJORADA ---
+st.subheader("📋 Datos básicos")
+
 display_df = df_formatted[df_formatted['Tipo de suelo'] == selected_soil].copy()
-display_df.columns = [
-    "Suelo", "Finos (%)", "Arena (%)", "LL", "LP", "IP", 
-    "γ (kN/m³)", "γ sum", "w (%)", "E (MPa)", "φ' (°)", "c' (kPa)", "φ res", "k (m/s)"
-]
+display_df = display_df[['Tipo de suelo', 'Granulometria_<0.06', 'LL', 'IP', 'Gamma_aparente', 'Phi', 'Cohesion', 'E_mod']]
 
-# Mostramos la tabla interactiva pero forzando a que no use index
 st.dataframe(
     display_df,
     hide_index=True,
     use_container_width=True,
     column_config={
-        "Suelo": st.column_config.TextColumn("Tipo de Suelo", width="medium"),
-        "k (m/s)": st.column_config.TextColumn("Permeabilidad", help="Escala logarítmica", width="medium"),
+        "Tipo de suelo": st.column_config.TextColumn("Clasificación", width="medium"),
+        "Granulometria_<0.06": st.column_config.ProgressColumn(
+            "% Finos", 
+            help="Porcentaje que pasa el tamiz 0.063mm",
+            format="%s%%",
+            min_value=0, max_value=100
+        ),
+        "LL": st.column_config.NumberColumn("Lim. Líquido", format="%s%%"),
+        "IP": "Índice Plást.",
+        "Gamma_aparente": st.column_config.NumberColumn("Peso Esp. (kN/m³)", format="%s"),
+        "Phi": "Fricción (°)",
+        "Cohesion": "Cohesión (kPa)",
+        "E_mod": "Módulo E (MPa)"
     }
-)
-
-# --- BOTÓN DE DESCARGA ---
-csv = display_df.to_csv(index=False).encode('utf-8')
-st.download_button(
-    label="💾 Descargar esta Ficha (CSV)",
-    data=csv,
-    file_name=f'{selected_soil}_propiedades.csv',
-    mime='text/csv',
 )
