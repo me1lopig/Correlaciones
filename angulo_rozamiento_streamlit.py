@@ -1,3 +1,7 @@
+# aplicacin para calcular el ngulo de rozamiento (φ) a partir del ndice plstico (IP) y el nmero de golpes SPT (Nspt) 
+# utilizando diferentes correlaciones. La aplicacin permite al usuario ingresar los datos disponibles
+# calcular φ segn las correlaciones aplicables y generar un informe detallado en formato Word.
+
 import streamlit as st
 from docx import Document
 import io
