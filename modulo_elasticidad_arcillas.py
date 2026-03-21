@@ -288,7 +288,7 @@ with st.sidebar:
     
     n_spt = st.number_input("Valor N (SPT):", min_value=1, value=15, step=1, help="Golpeo N30 estándar")
     ip_val = st.number_input("Índice de Plasticidad (IP %):", min_value=0.0, value=20.0, step=1.0)
-    cu_val = st.number_input("Cohesión sin drenaje (Cu kPa):", min_value=1.0, value=100.0, step=10.0)
+    cu_val = st.number_input("Cohesión sin drenaje (Cu kPa):", min_value=0.0, value=100.0, step=10.0)
     
     st.markdown("---")
     st.header("2. ⚖️ Estado del Suelo")
