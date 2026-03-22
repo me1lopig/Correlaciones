@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
-    page_title="Propiedades de Materiales",
+    page_title="Propiedades de Materiales GrundBauTaschenbuch",
     page_icon="🏗️",
     layout="wide",
     initial_sidebar_state="expanded"
