@@ -1,114 +1,93 @@
-import streamlit as st
+"""
+app.py — Consulta de propiedades de suelos
+==========================================
+Aplicación Streamlit de consulta de parámetros geotécnicos del terreno.
+Una pestaña por documento/fuente; el usuario elige el documento aplicable.
+Los valores de distintas fuentes NO se comparan ni se mezclan.
+
+Ejecutar:  streamlit run app.py
+"""
+from __future__ import annotations
 import pandas as pd
+import streamlit as st
 
-# Configuración de la página
-st.set_page_config(page_title="Tipos de Suelo - Metro Sur", layout="wide")
+import soil_params_engine as eng
 
-# Título con estilo
-st.markdown("""
-<div style="background-color: #4472C4; color: white; padding: 15px; text-align: center; border-radius: 5px; margin-bottom: 20px;">
-    <h2 style="color: white; margin: 0;">PARÁMETROS GEOTÉCNICOS METRO SUR MADRID</h2>
-</div>
-""", unsafe_allow_html=True)
+st.set_page_config(page_title="Consulta de propiedades de suelos",
+                   page_icon="🪨", layout="wide")
 
-# Datos embebidos en el código
-data = [
-    ["Rellenos antrópicos", "18", "0", "28", "800-1.000", "0,35", "2.000"],
-    ["Rellenso seleccionados compactados", "21", "20", "34", "10.000", "0,28", "8.000"],
-    ["Aluviales", "20", "0", "32", "1.000-1.500", "0,32", "5.000"],
-    ["Arenas Cuaternarias", "20", "0-5", "34", "3.000-6.000", "0,30", "8.000"],
-    ["Arenas de miga", "20", "5-10", "35", "5.500-7.500", "0,30", "12.000-20.000"],
-    ["Arenas Tosquizas", "20,5", "10-15", "33", "8.000-10.000", "0,30", "15.000-20.000"],
-    ["Toscos Arenosos", "20,8", "20-25", "32,5", "13.000", "0,30", "25.000-35.000"],
-    ["Toscos", "21", "30-40", "30", "15.000-18.000", "0,30", "30.000-40.000"],
-    ["Toscos de alta plasticidad", "20,6", "40-80", "28", "20.000", "0,28", "40.000"],
-    ["Peñuelas verdes y grises", "20", "50-60", "28", "20.000", "0,28", "35.000-50.000"],
-    ["Peñuelas verdes o grises con yesos", "21", "50-80", "30", "25.000", "0,27", "40.000-55.000"],
-    ["Peñuelas reblandecidas con yesos (redepositadas)", "20", "0-10", "28", "1.000", "0,35", "5.000"],
-    ["Arenas micáceas en Mioceno", "21", "5-10", "34", "5.000", "0,30", "10.000"],
-    ["Sepiolitas", "16", "20", "28", "30.000-50.000", "0,28", "20.000"],
-    ["Caliches niveles litificados", "22", "150", "32", "60.000", "0,25", "80.000-100.000"],
-    ["Yesos", "23", "70-100", "28", "40.000", "0,26", "6.000"]
-]
 
-columns = ["Tipo de suelo", "Peso específico aparente", "Cohesión", "Ángulo de rozamiento", "Módulo de deformación", "Coef poisson", "Coeficiente de balasto kh"]
-units = ["UNIDADES", "kN/m³", "kN/m²", "º", "T/m²", "--", "T/m³"]
+# --------------------------------------------------------------------------- #
+#  Utilidades de UI                                                            #
+# --------------------------------------------------------------------------- #
+def filtra(df: pd.DataFrame, texto: str) -> pd.DataFrame:
+    if not texto:
+        return df
+    texto = texto.strip().lower()
+    mascara = df.apply(
+        lambda fila: fila.astype(str).str.lower().str.contains(texto).any(),
+        axis=1)
+    return df[mascara]
 
-# Crear tabla HTML personalizada
-html_table = """
-<style>
-    .custom-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        margin-top: 10px;
-    }
-    .custom-table th {
-        background-color: #4472C4;
-        color: white;
-        padding: 12px;
-        text-align: left;
-        font-weight: bold;
-        border: 1px solid #ddd;
-    }
-    .custom-table .units-row {
-        background-color: #B4C7E7;
-        font-weight: bold;
-        color: black;
-    }
-    .custom-table .data-row {
-        background-color: #D9E1F2;
-        color: black;
-    }
-    .custom-table td {
-        padding: 10px;
-        border: 1px solid #ddd;
-        text-align: left;
-    }
-</style>
 
-<table class="custom-table">
-    <thead>
-        <tr>
-"""
+def pinta_fuente(meta: dict) -> None:
+    fid = meta["fuente_id"]
+    st.subheader(meta["nombre"])
+    st.caption(f"📖 Fuente: {meta['cita']}")
+    if meta.get("nota"):
+        st.info(meta["nota"], icon="ℹ️")
 
-# Agregar encabezados
-for col in columns:
-    html_table += "            <th>" + col + "</th>\n"
+    df = eng.tabla_formateada(fid)
 
-html_table += """        </tr>
-    </thead>
-    <tbody>
-        <tr class="units-row">
-"""
+    busca = st.text_input("Buscar tipo de suelo",
+                          key=f"buscar_{fid}",
+                          placeholder="p. ej. arcilla, grava, tosco…")
+    vista = filtra(df, busca)
 
-# Agregar fila de unidades
-for unit in units:
-    html_table += "            <td>" + unit + "</td>\n"
+    st.caption(f"{len(vista)} de {len(df)} filas")
+    st.dataframe(vista, width="stretch", hide_index=True)
 
-html_table += "        </tr>\n"
+    csv = eng.tabla(fid).to_csv(index=False).encode("utf-8")
+    st.download_button("⬇️ Descargar tabla (CSV)", data=csv,
+                       file_name=f"{fid}.csv", mime="text/csv",
+                       key=f"dl_{fid}")
 
-# Agregar filas de datos
-for row in data:
-    html_table += '        <tr class="data-row">\n'
-    for cell in row:
-        html_table += "            <td>" + str(cell) + "</td>\n"
-    html_table += "        </tr>\n"
 
-html_table += """    </tbody>
-</table>
-"""
+# --------------------------------------------------------------------------- #
+#  Barra lateral                                                               #
+# --------------------------------------------------------------------------- #
+with st.sidebar:
+    st.title("🪨 Propiedades de suelos")
+    st.write("Base de datos de parámetros del terreno tabulados por fuente.")
+    st.warning("Valores **orientativos**. No sustituyen la caracterización "
+               "geotécnica específica de cada emplazamiento mediante ensayos.",
+               icon="⚠️")
 
-st.markdown(html_table, unsafe_allow_html=True)
+    with st.expander("Fuentes incluidas"):
+        for m in eng.lista_fuentes():
+            st.markdown(f"**{m['id']}. {m['nombre']}**  \n"
+                        f"<small>{m['cita']}</small>", unsafe_allow_html=True)
 
-# Información adicional
-st.markdown("""
-<div style="background-color: #E7E6E6; padding: 15px; border-radius: 5px; margin-top: 20px;">
-<strong>Notas:</strong>
-<ul>
-<li>Los autores recomiendan que en los casos en los que aparecen dos valores, el mayor se considere para niveles profundos (>10 m) o con un mayor grado de consolidación o cementación.</li>
-<li>Los valores se han tomado para el diseño de pantallas de proyectos del metro de Madrid.</li>
-</ul>
-</div>
-""", unsafe_allow_html=True)
+    with st.expander("Correcciones aplicadas al original"):
+        st.markdown(
+            "- **Unidades:** cohesión NAVFAC `t/m³ → t/m²`; densidades CTE "
+            "`kN/m² → kN/m³`; permeabilidad `m/sg → m/s`.\n"
+            "- **Rangos** de texto (`800-1.000`, `10^-2 a 10^-5`, `>38`) "
+            "separados en mínimo/máximo.\n"
+            "- **Formato es-ES** normalizado (miles/decimal); `--` → sin dato.\n"
+            "- **Erratas** de etiquetas y nombres de suelo corregidas."
+        )
+
+
+# --------------------------------------------------------------------------- #
+#  Cuerpo: una pestaña por fuente                                              #
+# --------------------------------------------------------------------------- #
+st.title("Consulta de propiedades de suelos")
+st.caption("Selecciona el documento aplicable. Cada pestaña es una fuente "
+           "independiente.")
+
+metas = eng.lista_fuentes()
+pestanas = st.tabs([m["nombre"] for m in metas])
+for pestana, meta in zip(pestanas, metas):
+    with pestana:
+        pinta_fuente(meta)
