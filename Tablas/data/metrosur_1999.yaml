@@ -117,4 +117,4 @@ filas:
   phi: 28
   e_def: 40000
   poisson: 0.26
-  balasto: 6000
+  balasto: 60000

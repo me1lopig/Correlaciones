@@ -47,10 +47,11 @@ def pinta_fuente(meta: dict) -> None:
     st.caption(f"{len(vista)} de {len(df)} filas")
     st.dataframe(vista, width="stretch", hide_index=True)
 
-    csv = eng.tabla(fid).to_csv(index=False).encode("utf-8")
-    st.download_button("⬇️ Descargar tabla (CSV)", data=csv,
-                       file_name=f"{fid}.csv", mime="text/csv",
-                       key=f"dl_{fid}")
+    # descarga de tabla en CSV (desactivada por ahora)
+    #csv = eng.tabla(fid).to_csv(index=False).encode("utf-8")
+    #st.download_button("⬇️ Descargar tabla (CSV)", data=csv,
+    #                  file_name=f"{fid}.csv", mime="text/csv",
+    #                  key=f"dl_{fid}")
 
 
 # --------------------------------------------------------------------------- #
@@ -68,15 +69,7 @@ with st.sidebar:
             st.markdown(f"**{m['id']}. {m['nombre']}**  \n"
                         f"<small>{m['cita']}</small>", unsafe_allow_html=True)
 
-    with st.expander("Correcciones aplicadas al original"):
-        st.markdown(
-            "- **Unidades:** cohesión NAVFAC `t/m³ → t/m²`; densidades CTE "
-            "`kN/m² → kN/m³`; permeabilidad `m/sg → m/s`.\n"
-            "- **Rangos** de texto (`800-1.000`, `10^-2 a 10^-5`, `>38`) "
-            "separados en mínimo/máximo.\n"
-            "- **Formato es-ES** normalizado (miles/decimal); `--` → sin dato.\n"
-            "- **Erratas** de etiquetas y nombres de suelo corregidas."
-        )
+
 
 
 # --------------------------------------------------------------------------- #
@@ -85,6 +78,7 @@ with st.sidebar:
 st.title("Consulta de propiedades de suelos")
 st.caption("Selecciona el documento aplicable. Cada pestaña es una fuente "
            "independiente.")
+st.markdown("Realizado según directriva ITQ404")
 
 metas = eng.lista_fuentes()
 pestanas = st.tabs([m["nombre"] for m in metas])
