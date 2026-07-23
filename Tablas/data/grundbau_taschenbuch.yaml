@@ -1,4 +1,4 @@
-meta: {id: 1, fuente_id: grundbau_taschenbüch, nombre: Grundbau-Taschenbüch, cita: 'Grundbau-Taschenbüch,
+meta: {id: 1, fuente_id: grundbau_taschenbuch, nombre: Grundbau-Taschenbuch, cita: 'Grundbau-Taschenbuch,
     3ª edición, 1ª parte (1980). Reproducida en el Curso de Cimentaciones de Rodríguez Ortiz.', nota: Cada
     suelo se define por un rango (valor inferior–superior). Valores solo orientativos.}
 columnas:
