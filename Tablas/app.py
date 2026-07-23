@@ -78,7 +78,7 @@ with st.sidebar:
 st.title("Consulta de propiedades de suelos")
 st.caption("Selecciona el documento aplicable. Cada pestaña es una fuente "
            "independiente.")
-st.markdown("Realizado según directriva ITQ404")
+st.markdown("Realizado según directiva ITQ404")
 
 metas = eng.lista_fuentes()
 pestanas = st.tabs([m["nombre"] for m in metas])
